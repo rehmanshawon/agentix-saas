@@ -1,0 +1,18 @@
+{
+  "name": "agentix-saas",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "dev": "corepack pnpm -r --parallel --filter @agentix/api --filter @agentix/web --filter @agentix/widget dev",
+    "build": "corepack pnpm -r --filter @agentix/api --filter @agentix/web --filter @agentix/widget build",
+    "typecheck": "corepack pnpm -r --filter @agentix/api --filter @agentix/web typecheck",
+    "db:generate": "corepack pnpm --filter @agentix/database run prisma:generate",
+    "db:push": "corepack pnpm --filter @agentix/database run prisma:push",
+    "db:seed": "corepack pnpm --filter @agentix/database run seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.14",
+    "typescript": "^5.6.3"
+  }
+}

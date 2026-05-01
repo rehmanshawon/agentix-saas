@@ -1,0 +1,10 @@
+{
+  "name": "@agentix/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./pricing.ts",
+    "./pricing": "./pricing.ts"
+  }
+}

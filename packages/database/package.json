@@ -1,0 +1,29 @@
+{
+  "name": "@agentix/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./client": {
+      "types": "./client.d.ts",
+      "default": "./client.js"
+    }
+  },
+  "scripts": {
+    "prisma:generate": "prisma generate --schema ./schema.prisma",
+    "prisma:push": "prisma db push --schema ./schema.prisma",
+    "seed": "node ./seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
+  }
+}

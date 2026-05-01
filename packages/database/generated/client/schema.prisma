@@ -1,0 +1,96 @@
+// packages/database/schema.prisma
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+// 1. The End User
+model User {
+  id           String   @id @default(uuid())
+  name         String?
+  email        String   @unique
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspaces          WorkspaceMember[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+// 2. The Multi-Tenant Hub (The SaaS Account)
+model Workspace {
+  id               String   @id @default(uuid())
+  name             String
+  stripeCustomerId String?
+  subscriptionTier String? // NULL = no plan, "STARTER" | "GROWTH" | "ENTERPRISE"
+  tokenBalance     Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  members   WorkspaceMember[]
+  agents    Agent[]
+  documents Document[]
+}
+
+model WorkspaceMember {
+  id          String   @id @default(uuid())
+  userId      String
+  workspaceId String
+  role        String   @default("OWNER")
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@unique([userId, workspaceId])
+}
+
+// 3. The Autonomous Agent
+model Agent {
+  id           String   @id @default(uuid())
+  workspaceId  String
+  name         String
+  systemPrompt String   @default("You are a helpful customer support AI.")
+  llmProvider  String   @default("openai")
+  modelName    String   @default("gpt-4o-mini")
+  colorHex     String   @default("#4F46E5")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id])
+  documents Document[]
+}
+
+// 4. Uploaded Knowledge (The Second Brain)
+model Document {
+  id          String   @id @default(uuid())
+  workspaceId String
+  agentId     String?
+  fileName    String
+  fileUrl     String
+  mimeType    String?
+  status      String   @default("PROCESSING")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  agent     Agent?    @relation(fields: [agentId], references: [id])
+}
+
+// 5. Password Reset Tokens
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

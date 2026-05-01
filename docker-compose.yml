@@ -1,0 +1,54 @@
+# File: docker-compose.yml
+version: "3.8"
+
+services:
+  # The Transactional Database (Users, Workspaces, Settings)
+  mysql:
+    image: mysql:8.0
+    container_name: agentix_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: agentix
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: agentix_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # NOTE: The API and Web services are commented out for local development.
+  # You will run these locally using `pnpm dev` instead.
+  # Uncomment these when you are ready to build production Docker images!
+  #
+#  api:
+#    build:
+#      context: .
+#      dockerfile: apps/api/Dockerfile
+#    container_name: agentix_api
+#    ports:
+#      - "3001:3001"
+#    depends_on:
+#      - mongodb
+#      - redis
+#    restart: unless-stopped
+#
+#  web:
+#    build:
+#      context: .
+#      dockerfile: apps/web/Dockerfile
+#    container_name: agentix_web
+#    ports:
+#      - "3000:3000"
+#    depends_on:
+#      - api
+#    restart: unless-stopped
+
+volumes:
+  # This ensures data isn't lost if the Docker container is stopped
+  mysql_data:
