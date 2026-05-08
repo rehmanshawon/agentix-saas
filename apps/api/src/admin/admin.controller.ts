@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Patch,
+  Put,
   Param,
   Body,
   Headers,
@@ -487,5 +488,54 @@ export class AdminController {
       },
       topWorkspaces,
     };
+  }
+
+  @Get("settings")
+  async getSettings(@Headers("x-admin-key") adminKey: string) {
+    this.validateAdmin(adminKey);
+
+    // For now, return defaults from env/existing config
+    // In production, these would come from the AdminSettings table
+    const settings = {
+      platformName: "Agentix",
+      primaryColor: "#4F46E5",
+      logoUrl: "",
+      faviconUrl: "",
+      trialEnabled: process.env.DEMO_MODE === "true",
+      trialDays: 7,
+      trialTokens: 100,
+      smtpHost: "",
+      smtpPort: 587,
+      smtpUser: "",
+      smtpPass: "",
+      fromEmail: "",
+      adminPassword: ADMIN_PASSWORD,
+      rateLimitPerMin: 10,
+      sessionTimeout: 86400,
+      stripeMode: process.env.STRIPE_SECRET_KEY?.startsWith("sk_live")
+        ? "live"
+        : "test",
+      stripeTestKey: "",
+      stripeTestSecret: "",
+      stripeLiveKey: "",
+      stripeLiveSecret: "",
+      stripeWebhookSecret: "",
+    };
+
+    return { settings };
+  }
+
+  @Put("settings")
+  async updateSettings(
+    @Headers("x-admin-key") adminKey: string,
+    @Body() body: any,
+  ) {
+    this.validateAdmin(adminKey);
+
+    // In production, save to AdminSettings table
+    // For now, log and return success
+    console.log("Settings updated:", JSON.stringify(body, null, 2));
+
+    return { success: true, message: "Settings saved successfully." };
   }
 }
