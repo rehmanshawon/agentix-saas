@@ -325,4 +325,167 @@ export class AdminController {
         : null,
     };
   }
+
+  @Get("analytics/revenue")
+  async getRevenueAnalytics(@Headers("x-admin-key") adminKey: string) {
+    this.validateAdmin(adminKey);
+
+    const tierPrices: Record<string, number> = {
+      STARTER: 29,
+      GROWTH: 79,
+      ENTERPRISE: 299,
+    };
+
+    // Get all subscribed workspaces
+    const workspaces = await this.prisma.workspace.findMany({
+      where: { subscriptionTier: { not: null } },
+      select: { subscriptionTier: true, createdAt: true },
+    });
+
+    // Total revenue
+    const totalRevenue = workspaces.reduce((sum, w) => {
+      return sum + (tierPrices[w.subscriptionTier!] || 0);
+    }, 0);
+
+    // Revenue by tier
+    const tierCounts: Record<string, number> = {
+      STARTER: 0,
+      GROWTH: 0,
+      ENTERPRISE: 0,
+    };
+    workspaces.forEach((w) => {
+      if (w.subscriptionTier && tierCounts[w.subscriptionTier] !== undefined) {
+        tierCounts[w.subscriptionTier]++;
+      }
+    });
+
+    const revenueByTier = Object.entries(tierCounts).map(([tier, count]) => ({
+      name:
+        tier === "STARTER"
+          ? "Starter"
+          : tier === "GROWTH"
+            ? "Growth"
+            : "Agency",
+      value: count * (tierPrices[tier] || 0),
+      subscribers: count,
+      color:
+        tier === "STARTER"
+          ? "#3B82F6"
+          : tier === "GROWTH"
+            ? "#6366F1"
+            : "#8B5CF6",
+    }));
+
+    // MRR over last 12 months
+    const mrrHistory = [];
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthLabel = date.toLocaleDateString("en-US", {
+        month: "short",
+        year: "2-digit",
+      });
+
+      // Count workspaces created before this month
+      const count = await this.prisma.workspace.count({
+        where: {
+          subscriptionTier: { not: null },
+          createdAt: {
+            lte: new Date(date.getFullYear(), date.getMonth() + 1, 0),
+          },
+        },
+      });
+
+      mrrHistory.push({
+        month: monthLabel,
+        mrr: count * 29, // Simplified average
+        subscribers: count,
+      });
+    }
+
+    return {
+      totalRevenue,
+      revenueByTier,
+      mrrHistory,
+      totalSubscribers: workspaces.length,
+    };
+  }
+
+  @Get("analytics/usage")
+  async getUsageAnalytics(@Headers("x-admin-key") adminKey: string) {
+    this.validateAdmin(adminKey);
+
+    // Total tokens across all workspaces
+    const workspaces = await this.prisma.workspace.findMany({
+      where: { subscriptionTier: { not: null } },
+      select: { subscriptionTier: true, tokenBalance: true, name: true },
+    });
+
+    // Tokens consumed (tier max - current balance)
+    const tierMaxMap: Record<string, number> = {
+      STARTER: 500,
+      GROWTH: 5000,
+      ENTERPRISE: 25000,
+    };
+
+    const totalTokensAllocated = workspaces.reduce((sum, w) => {
+      return sum + (tierMaxMap[w.subscriptionTier!] || 0);
+    }, 0);
+
+    const totalTokensRemaining = workspaces.reduce((sum, w) => {
+      return sum + w.tokenBalance;
+    }, 0);
+
+    const totalTokensConsumed = totalTokensAllocated - totalTokensRemaining;
+
+    // Top workspaces by usage
+    const topWorkspaces = workspaces
+      .map((w) => ({
+        name: w.name,
+        tier: w.subscriptionTier,
+        allocated: tierMaxMap[w.subscriptionTier!] || 0,
+        remaining: w.tokenBalance,
+        consumed: (tierMaxMap[w.subscriptionTier!] || 0) - w.tokenBalance,
+      }))
+      .sort((a, b) => b.consumed - a.consumed)
+      .slice(0, 10);
+
+    // Document analytics
+    const totalDocuments = await this.prisma.document.count();
+    const readyDocuments = await this.prisma.document.count({
+      where: { status: "READY" },
+    });
+
+    // Agent analytics
+    const totalAgents = await this.prisma.agent.count();
+    const modelBreakdown = await this.prisma.agent.groupBy({
+      by: ["modelName"],
+      _count: true,
+    });
+
+    return {
+      tokens: {
+        allocated: totalTokensAllocated,
+        remaining: totalTokensRemaining,
+        consumed: totalTokensConsumed,
+        consumptionRate:
+          totalTokensAllocated > 0
+            ? Math.round((totalTokensConsumed / totalTokensAllocated) * 100)
+            : 0,
+      },
+      documents: {
+        total: totalDocuments,
+        ready: readyDocuments,
+        processing: totalDocuments - readyDocuments,
+      },
+      agents: {
+        total: totalAgents,
+        modelBreakdown: modelBreakdown.map((m) => ({
+          model: m.modelName,
+          count: m._count,
+        })),
+      },
+      topWorkspaces,
+    };
+  }
 }
