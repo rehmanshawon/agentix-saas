@@ -1,10 +1,127 @@
 # 🤖 Agentix SaaS
 
-**Agentix** is a full-stack, multi-tenant Software-as-a-Service (SaaS) platform that empowers businesses to build, train, and deploy custom AI chatbots. Users can upload their company documents (PDFs, text files) to create a private "Second Brain" for their AI, customize the chatbot's persona and appearance, and embed it directly into their own websites using a lightweight JavaScript widget.
+**Agentix** is a full-stack, multi-tenant Software-as-a-Service (SaaS) platform that lets you build and sell custom AI chatbots to your own clients. Upload company documents, train your AI, customize the chatbot's persona and appearance, and embed it on any website with a single line of code.
 
-The platform includes built-in secure multi-tenancy, AI token usage tracking, and automated Stripe subscription billing.
+Built-in features include multi-tenancy, AI token usage tracking, Stripe subscription billing, and a **powerful agency-grade admin dashboard** to manage your entire business.
 
 ---
+
+## ✨ What's Included
+
+- 🧠 **RAG-Powered AI** — OpenAI GPT-4o-mini + Pinecone vector search
+- 👥 **Multi-Tenant** — Isolated workspaces, data never leaks
+- 💳 **Stripe Billing** — 3 subscription tiers (Starter, Growth, Agency)
+- 🎨 **Embeddable Widget** — Shadow DOM, one script tag, zero CSS conflicts
+- 📊 **Admin Dashboard** — Overview, Subscribers, Analytics, Settings, Integrations
+- 🔐 **Auth** — Email/Password + Google OAuth via NextAuth
+- 🛠️ **Full Source Code** — Next.js 14 + NestJS + Prisma + Tailwind CSS
+
+---
+
+## 🏗️ Architecture
+
+┌─────────────────────────────────────┐
+│ STRIPE (Billing) │
+└──────────┬──────────────┬──────────┘
+│ (Webhooks) │ (Checkout)
+▼ ▼
+┌──────────────┐ ┌──────────────────────┐ ┌──────────────┐
+│ SaaS Customer│───▶│ NEXT.JS DASHBOARD │───▶│ MySQL (Data) │
+│ (Browser) │ │ Auth, Builder, Docs │ │ Users, Agents│
+└──────────────┘ └──────────┬───────────┘ └──────┬───────┘
+│ │
+▼ ▼
+┌──────────────┐ ┌──────────────────────┐ ┌──────────────┐
+│ End User │───▶│ NESTJS API (Hub) │◀───│ Prisma ORM │
+│ (Widget Chat)│ │ Chat, RAG, Billing │ └──────────────┘
+└──────────────┘ └──────┬───────┬───────┘
+│ │
+▼ ▼
+┌──────────┐ ┌──────────┐
+│ PINECONE │ │ OPENAI │
+│ (Vectors)│ │ (LLM) │
+└──────────┘ └──────────┘
+
+---
+
+## 📂 Project Structure
+
+agentix-saas/
+├── apps/
+│ ├── api/ # NestJS Backend
+│ ├── web/ # Next.js Frontend + Admin Dashboard
+│ └── widget/ # Embeddable Chat Widget
+├── packages/
+│ ├── config/ # Shared pricing configuration
+│ └── database/ # Prisma schema & client
+├── DEPLOYMENT.md # Production deployment guide
+├── STRIPE_SETUP.md # Stripe configuration guide
+├── ADMIN_GUIDE.md # Admin dashboard documentation
+├── .env.example # Environment variables template
+├── docker-compose.yml # Local MySQL (for development)
+├── package.json
+├── pnpm-workspace.yaml
+└── turbo.json
+
+---
+
+## 🚀 Quick Start (Local Development)
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm (`npm install -g pnpm`)
+- Docker (for local MySQL)
+
+### Setup
+
+````bash
+# 1. Install dependencies
+corepack pnpm install
+
+# 2. Copy environment file
+cp .env.example .env
+# Edit .env with your API keys
+
+# 3. Start MySQL
+docker compose up -d
+
+# 4. Push database schema
+corepack pnpm db:push
+corepack pnpm db:generate
+
+# 5. Start dev servers
+corepack pnpm dev
+
+Dashboard: http://localhost:3000
+
+API: http://localhost:3001
+
+Admin Panel: http://localhost:3000/admin (password: admin123)
+
+API Docs: http://localhost:3001/api/docs
+
+📚 Documentation
+DEPLOYMENT.md	Step-by-step production deployment guide
+STRIPE_SETUP.md	How to configure Stripe products, prices, and webhooks
+ADMIN_GUIDE.md	Admin dashboard walkthrough
+
+🔧 Tech Stack
+Frontend	Next.js 14, React 18, Tailwind CSS, Recharts
+Backend	NestJS, TypeScript
+Database	MySQL + Prisma ORM
+Vector DB	Pinecone
+AI	OpenAI (GPT-4o-mini, text-embedding-3-small) + LangChain
+Auth	NextAuth (Google OAuth + Credentials)
+Billing	Stripe Checkout + Webhooks
+Widget	Vanilla JS (Vite), Shadow DOM
+Monorepo	Turborepo + pnpm
+
+📄 License
+This product is sold as a digital download. See the included license file for terms.
+
+🆘 Support
+Email support is included for 6 months from purchase. Contact through Gumroad or the email provided with your purchase.
 
 ## 🏗️ Project Architecture
 
@@ -41,7 +158,7 @@ Agentix is built as a **Monorepo** (managed by Turborepo and pnpm) to strictly s
                         | PINECONE (Vector) |       |   OPENAI (LLM)    |
                         | (Document Chunks) |       | (Embeddings/Chat) |
                         +-------------------+       +-------------------+
-```
+````
 
 ---
 
