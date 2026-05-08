@@ -1,8 +1,10 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Put,
+  Delete,
   Param,
   Body,
   Headers,
@@ -537,5 +539,121 @@ export class AdminController {
     console.log("Settings updated:", JSON.stringify(body, null, 2));
 
     return { success: true, message: "Settings saved successfully." };
+  }
+
+  @Get("integrations/status")
+  async getIntegrationStatus(@Headers("x-admin-key") adminKey: string) {
+    this.validateAdmin(adminKey);
+
+    const integrations = [
+      {
+        service: "openai",
+        name: "OpenAI",
+        status: process.env.OPENAI_API_KEY ? "connected" : "disconnected",
+        message: process.env.OPENAI_API_KEY
+          ? "Connected to OpenAI API. GPT-4o-mini and embedding models available."
+          : "OpenAI API key not configured. AI features will not work.",
+        details: [
+          "Model: gpt-4o-mini (chat), text-embedding-3-small (embeddings)",
+          "Usage dashboard: platform.openai.com/usage",
+          process.env.OPENAI_API_KEY
+            ? "API key: ****" + process.env.OPENAI_API_KEY.slice(-4)
+            : "Not configured",
+        ],
+      },
+      {
+        service: "pinecone",
+        name: "Pinecone",
+        status: process.env.PINECONE_API_KEY ? "connected" : "disconnected",
+        message: process.env.PINECONE_API_KEY
+          ? `Connected to Pinecone vector database. Index: ${process.env.PINECONE_INDEX_NAME || "agentix-index"}`
+          : "Pinecone API key not configured. Document vector search will not work.",
+        details: [
+          "Index: " + (process.env.PINECONE_INDEX_NAME || "agentix-index"),
+          "Dimension: 1536, Metric: cosine",
+          "Console: app.pinecone.io",
+        ],
+      },
+      {
+        service: "stripe",
+        name: "Stripe",
+        status: process.env.STRIPE_SECRET_KEY ? "connected" : "disconnected",
+        message: process.env.STRIPE_SECRET_KEY
+          ? `Connected to Stripe in ${process.env.STRIPE_SECRET_KEY?.startsWith("sk_live") ? "live" : "test"} mode.`
+          : "Stripe not configured. Billing features will not work.",
+        details: [
+          "Mode: " +
+            (process.env.STRIPE_SECRET_KEY?.startsWith("sk_live")
+              ? "Live"
+              : "Test"),
+          "Webhook configured: " +
+            (process.env.STRIPE_WEBHOOK_SECRET ? "Yes" : "No"),
+          "Dashboard: dashboard.stripe.com",
+        ],
+      },
+    ];
+
+    return { integrations };
+  }
+
+  @Get("webhooks")
+  async getWebhooks(@Headers("x-admin-key") adminKey: string) {
+    this.validateAdmin(adminKey);
+
+    const webhooks = await this.prisma.outgoingWebhook.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    return { webhooks };
+  }
+
+  @Post("webhooks")
+  async createWebhook(
+    @Headers("x-admin-key") adminKey: string,
+    @Body() body: { url: string; events: string },
+  ) {
+    this.validateAdmin(adminKey);
+
+    if (!body.url) {
+      throw new HttpException("URL is required", HttpStatus.BAD_REQUEST);
+    }
+
+    const webhook = await this.prisma.outgoingWebhook.create({
+      data: {
+        workspaceId: "admin", // Global webhook
+        url: body.url,
+        events: body.events || "chat.message",
+      },
+    });
+
+    return { webhook };
+  }
+
+  @Patch("webhooks/:id")
+  async updateWebhook(
+    @Headers("x-admin-key") adminKey: string,
+    @Param("id") id: string,
+    @Body() body: { isActive?: boolean },
+  ) {
+    this.validateAdmin(adminKey);
+
+    const webhook = await this.prisma.outgoingWebhook.update({
+      where: { id },
+      data: { isActive: body.isActive },
+    });
+
+    return { webhook };
+  }
+
+  @Delete("webhooks/:id")
+  async deleteWebhook(
+    @Headers("x-admin-key") adminKey: string,
+    @Param("id") id: string,
+  ) {
+    this.validateAdmin(adminKey);
+
+    await this.prisma.outgoingWebhook.delete({ where: { id } });
+
+    return { success: true };
   }
 }

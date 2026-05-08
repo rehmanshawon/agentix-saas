@@ -94,3 +94,14 @@ model PasswordResetToken {
 
   user User @relation(fields: [userId], references: [id])
 }
+
+model OutgoingWebhook {
+  id          String   @id @default(uuid())
+  workspaceId String
+  url         String
+  events      String   @default("chat.message")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  //workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}

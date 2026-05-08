@@ -182,6 +182,15 @@ exports.Prisma.PasswordResetTokenScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.OutgoingWebhookScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  url: 'url',
+  events: 'events',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -199,7 +208,8 @@ exports.Prisma.ModelName = {
   WorkspaceMember: 'WorkspaceMember',
   Agent: 'Agent',
   Document: 'Document',
-  PasswordResetToken: 'PasswordResetToken'
+  PasswordResetToken: 'PasswordResetToken',
+  OutgoingWebhook: 'OutgoingWebhook'
 };
 
 /**

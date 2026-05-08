@@ -44,4 +44,8 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   get passwordResetToken(): PrismaClient["passwordResetToken"] {
     return this.client.passwordResetToken;
   }
+
+  get outgoingWebhook(): PrismaClient["outgoingWebhook"] {
+    return this.client.outgoingWebhook;
+  }
 }
