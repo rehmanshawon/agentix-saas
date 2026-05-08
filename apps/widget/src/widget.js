@@ -16,7 +16,7 @@
     window.AgentixWidgetConfig && window.AgentixWidgetConfig.apiUrl;
 
   const BASE_API_URL =
-    scriptApiUrl || runtimeApiUrl || "http://localhost:3001/api/chat";
+    scriptApiUrl || runtimeApiUrl || "https://api.ilogicmagic.com/api/chat";
   const POST_MESSAGE_URL = `${BASE_API_URL}/message`;
 
   if (!agentId) {
