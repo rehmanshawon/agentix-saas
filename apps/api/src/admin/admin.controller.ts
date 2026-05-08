@@ -267,4 +267,62 @@ export class AdminController {
 
     return { workspace };
   }
+
+  @Get("subscribers/:id")
+  async getSubscriberDetail(
+    @Headers("x-admin-key") adminKey: string,
+    @Param("id") id: string,
+  ) {
+    this.validateAdmin(adminKey);
+
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { id },
+      include: {
+        members: {
+          include: {
+            user: { select: { email: true, name: true, createdAt: true } },
+          },
+        },
+        agents: {
+          select: { id: true, name: true, modelName: true, createdAt: true },
+        },
+        documents: {
+          select: { id: true, fileName: true, status: true, createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+        },
+        _count: {
+          select: { agents: true, documents: true },
+        },
+      },
+    });
+
+    if (!workspace) {
+      throw new HttpException("Workspace not found", HttpStatus.NOT_FOUND);
+    }
+
+    const tierPrices: Record<string, number> = {
+      STARTER: 29,
+      GROWTH: 79,
+      ENTERPRISE: 299,
+    };
+
+    const tierMax = workspace.subscriptionTier
+      ? { STARTER: 500, GROWTH: 5000, ENTERPRISE: 25000 }[
+          workspace.subscriptionTier
+        ] || 0
+      : 0;
+
+    return {
+      ...workspace,
+      tierPrice: workspace.subscriptionTier
+        ? tierPrices[workspace.subscriptionTier] || 0
+        : 0,
+      tierMaxTokens: tierMax,
+      tokensUsed: tierMax - workspace.tokenBalance,
+      stripeDashboardUrl: workspace.stripeCustomerId
+        ? `https://dashboard.stripe.com/customers/${workspace.stripeCustomerId}`
+        : null,
+    };
+  }
 }
