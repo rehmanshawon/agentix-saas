@@ -63,7 +63,7 @@ export default async function HomePage() {
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
-                href="https://yourname.gumroad.com/l/agentix"
+                href="https://ilogicmagic.gumroad.com/l/agentix"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto px-8 py-4 text-base font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300"
@@ -91,7 +91,7 @@ export default async function HomePage() {
                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
                 <div className="w-3 h-3 rounded-full bg-green-500" />
                 <span className="ml-3 text-xs text-gray-400">
-                  your-website.com
+                  https://agentix.ilogicmagic.com
                 </span>
               </div>
               <div className="p-6 flex justify-end">
