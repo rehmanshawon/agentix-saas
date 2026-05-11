@@ -401,7 +401,7 @@ export default async function HomePage() {
 
               <div className="p-8">
                 <a
-                  href="https://yourname.gumroad.com/l/agentix"
+                  href="https://ilogicmagic.gumroad.com/l/agentix"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full py-4 px-6 text-center text-base font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
@@ -477,7 +477,7 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="https://yourname.gumroad.com/l/agentix"
+              href="https://ilogicmagic.gumroad.com/l/agentix"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full sm:w-auto px-8 py-4 text-base font-semibold text-gray-900 bg-white rounded-xl hover:bg-gray-100 transition-all"
