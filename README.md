@@ -1,242 +1,169 @@
-# 🤖 Agentix SaaS
+# Agentix SaaS
 
-**Agentix** is a full-stack, multi-tenant Software-as-a-Service (SaaS) platform that lets you build and sell custom AI chatbots to your own clients. Upload company documents, train your AI, customize the chatbot's persona and appearance, and embed it on any website with a single line of code.
+Agentix is an AI chatbot SaaS for small businesses. Customers upload business
+PDFs/documents, train an assistant, copy an embeddable script, and add a 24/7
+AI chatbot to their website.
 
-Built-in features include multi-tenancy, AI token usage tracking, Stripe subscription billing, and a **powerful agency-grade admin dashboard** to manage your entire business.
+Production direction:
 
----
+- Global self-service SaaS: `agentix.ilogicmagic.com`
+- SaaS app dashboard: `app.agentix.ilogicmagic.com` when deployment supports it
+- Public demo: `demo.agentix.ilogicmagic.com` or `/demo`
+- Bangladesh managed service: `bd.agentix.ilogicmagic.com` or `/bd`
 
-## ✨ What's Included
+## Current Stack
 
-- 🧠 **RAG-Powered AI** — OpenAI GPT-4o-mini + Pinecone vector search
-- 👥 **Multi-Tenant** — Isolated workspaces, data never leaks
-- 💳 **Stripe Billing** — 3 subscription tiers (Starter, Growth, Agency)
-- 🎨 **Embeddable Widget** — Shadow DOM, one script tag, zero CSS conflicts
-- 📊 **Admin Dashboard** — Overview, Subscribers, Analytics, Settings, Integrations
-- 🔐 **Auth** — Email/Password + Google OAuth via NextAuth
-- 🛠️ **Full Source Code** — Next.js 14 + NestJS + Prisma + Tailwind CSS
+- `apps/web`: Next.js 14 dashboard, auth, marketing pages, admin, Stripe webhook
+- `apps/api`: NestJS API for chat, knowledge uploads, RAG, billing, admin
+- `apps/widget`: Vanilla JS embeddable widget built with Vite
+- `packages/database`: Prisma schema/client for MySQL
+- `packages/config`: Shared pricing and plan limits
 
----
+## Product Routes
 
-## 🏗️ Architecture
+- `/`: Global SaaS landing page
+- `/pricing`: Global Stripe plans and Bangladesh annual service packages
+- `/demo`: Public non-Gumroad demo entry point
+- `/bd`: Bangladesh done-for-you service page
+- `/dashboard`: Customer app
+- `/dashboard/knowledge`: Upload and train documents
+- `/dashboard/builder`: Configure chatbot and copy embed snippet
+- `/dashboard/billing`: Stripe subscription plans
+- `/admin`: Admin dashboard
 
-┌─────────────────────────────────────┐
-│ STRIPE (Billing) │
-└──────────┬──────────────┬──────────┘
-│ (Webhooks) │ (Checkout)
-▼ ▼
-┌──────────────┐ ┌──────────────────────┐ ┌──────────────┐
-│ SaaS Customer│───▶│ NEXT.JS DASHBOARD │───▶│ MySQL (Data) │
-│ (Browser) │ │ Auth, Builder, Docs │ │ Users, Agents│
-└──────────────┘ └──────────┬───────────┘ └──────┬───────┘
-│ │
-▼ ▼
-┌──────────────┐ ┌──────────────────────┐ ┌──────────────┐
-│ End User │───▶│ NESTJS API (Hub) │◀───│ Prisma ORM │
-│ (Widget Chat)│ │ Chat, RAG, Billing │ └──────────────┘
-└──────────────┘ └──────┬───────┬───────┘
-│ │
-▼ ▼
-┌──────────┐ ┌──────────┐
-│ PINECONE │ │ OPENAI │
-│ (Vectors)│ │ (LLM) │
-└──────────┘ └──────────┘
+## Pricing Model
 
----
+Global self-service plans are configured in `packages/config/pricing.ts`:
 
-## 📂 Project Structure
+- Starter: `$7/month`, `$69/year`, 1 chatbot, 1,000 AI replies/month
+- Growth: `$15/month`, `$149/year`, 3 chatbots, 5,000 AI replies/month
+- Business: `$29/month`, `$299/year`, 10 chatbots, 15,000 AI replies/month
 
-agentix-saas/
-├── apps/
-│ ├── api/ # NestJS Backend
-│ ├── web/ # Next.js Frontend + Admin Dashboard
-│ └── widget/ # Embeddable Chat Widget
-├── packages/
-│ ├── config/ # Shared pricing configuration
-│ └── database/ # Prisma schema & client
-├── DEPLOYMENT.md # Production deployment guide
-├── STRIPE_SETUP.md # Stripe configuration guide
-├── ADMIN_GUIDE.md # Admin dashboard documentation
-├── .env.example # Environment variables template
-├── docker-compose.yml # Local MySQL (for development)
-├── package.json
-├── pnpm-workspace.yaml
-└── turbo.json
+Bangladesh annual packages are also configured there and use manual
+consultation/payment, not Stripe. Never sell unlimited AI usage; use reply,
+chatbot, document, and storage caps.
 
----
+## AI Provider Configuration
 
-## 🚀 Quick Start (Local Development)
+DeepSeek is the default chat provider. OpenAI remains configured as fallback and
+is still used for the current embedding pipeline.
 
-### Prerequisites
+Required AI variables:
 
-- Node.js 18+
-- pnpm (`npm install -g pnpm`)
-- Docker (for local MySQL)
-
-### Setup
-
-````bash
-# 1. Install dependencies
-corepack pnpm install
-
-# 2. Copy environment file
-cp .env.example .env
-# Edit .env with your API keys
-
-# 3. Start MySQL
-docker compose up -d
-
-# 4. Push database schema
-corepack pnpm db:push
-corepack pnpm db:generate
-
-# 5. Start dev servers
-corepack pnpm dev
-
-Dashboard: http://localhost:3000
-
-API: http://localhost:3001
-
-Admin Panel: http://localhost:3000/admin (password: admin123)
-
-API Docs: http://localhost:3001/api/docs
-
-📚 Documentation
-DEPLOYMENT.md	Step-by-step production deployment guide
-STRIPE_SETUP.md	How to configure Stripe products, prices, and webhooks
-ADMIN_GUIDE.md	Admin dashboard walkthrough
-
-🔧 Tech Stack
-Frontend	Next.js 14, React 18, Tailwind CSS, Recharts
-Backend	NestJS, TypeScript
-Database	MySQL + Prisma ORM
-Vector DB	Pinecone
-AI	OpenAI (GPT-4o-mini, text-embedding-3-small) + LangChain
-Auth	NextAuth (Google OAuth + Credentials)
-Billing	Stripe Checkout + Webhooks
-Widget	Vanilla JS (Vite), Shadow DOM
-Monorepo	Turborepo + pnpm
-
-📄 License
-This product is sold as a digital download. See the included license file for terms.
-
-🆘 Support
-Email support is included for 6 months from purchase. Contact through Gumroad or the email provided with your purchase.
-
-## 🏗️ Project Architecture
-
-Agentix is built as a **Monorepo** (managed by Turborepo and pnpm) to strictly separate concerns while sharing database schemas and configurations.
-
-**The stack consists of 4 core pillars:**
-
-1. **The Dashboard (Next.js):** A React-based web application where SaaS customers sign up, manage their subscription, upload training documents, and configure their AI Agent's appearance.
-2. **The Core API (NestJS):** A robust backend server that acts as the traffic controller. It handles file parsing, Stripe webhook processing, and coordinates the AI logic securely.
-3. **The RAG Pipeline (OpenAI + Pinecone + LangChain):** When documents are uploaded, the NestJS API chunks the text and stores it as vector embeddings in Pinecone. When a chat message arrives, it retrieves the most relevant chunks and feeds them to OpenAI (`gpt-4o-mini`) to generate an accurate, context-aware response.
-4. **The Embeddable Widget (Vite + Vanilla JS):** A lightweight, standalone script that customers inject into their HTML. It renders a shadow-DOM chat interface and communicates securely with the NestJS API.
-
-### Architecture Diagram
-
-```text
-                        +-------------------------------------------------+
-                        |                  STRIPE (Billing)               |
-                        +-------------------------------------------------+
-                                  | (Webhooks)           ^ (Checkout)
-                                  v                      |
-  +-----------------+      +-----------------------------------------+      +-----------------+
-  |  SaaS Customer  | ---> |          NEXT.JS DASHBOARD (Web)        | ---> |  MySQL Database |
-  | (Browser/Admin) |      | (Auth, UI, Agent Builder, File Uploads) |      | (Users, Agents, |
-  +-----------------+      +-----------------------------------------+      |  Workspaces)    |
-                                                |                           +-----------------+
-                                                v                                   ^
-  +-----------------+      +-----------------------------------------+              |
-  |  End User       | ---> |              NESTJS API (Hub)           | --------------
-  | (Widget Chat)   |      |   (Chat Logic, Vectorization, Billing)  |
-  +-----------------+      +-----------------------------------------+
-                                  |                           |
-                                  v                           v
-                        +-------------------+       +-------------------+
-                        | PINECONE (Vector) |       |   OPENAI (LLM)    |
-                        | (Document Chunks) |       | (Embeddings/Chat) |
-                        +-------------------+       +-------------------+
-````
-
----
-
-## 📂 Directory Tree Structure
-
-```text
-agentix-saas/
-├── apps/
-│   ├── api/                   # NestJS Backend Application
-│   ├── web/                   # Next.js Frontend Dashboard
-│   └── widget/                # Vite Vanilla JS Embeddable Widget
-├── packages/
-│   ├── config/                # Shared configurations (ESLint, TSConfig)
-│   └── database/              # Prisma ORM & MySQL Schema
-├── docker-compose.yml         # Local development database provisioning
-├── package.json               # Root workspace dependencies & Turbo scripts
-├── pnpm-workspace.yaml        # Monorepo workspace definitions
-└── turbo.json                 # Turborepo build pipeline configuration
+```bash
+DEFAULT_AI_PROVIDER=deepseek
+FALLBACK_AI_PROVIDER=openai
+DEEPSEEK_API_KEY=...
+DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+DEEPSEEK_CHAT_MODEL=deepseek-v4-flash
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_FALLBACK_MODEL=gpt-4o-mini
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 ```
 
----
+Provider names are not exposed to normal customers. The dashboard presents
+business-facing limits such as AI replies, chatbots, and documents.
 
-## 📖 Developer Guide: What File Does What?
+## Local Development
 
-### 1. `apps/api/` (The NestJS Backend)
+```bash
+corepack pnpm install
+cp .env.example .env
+docker compose up -d
+corepack pnpm db:push
+corepack pnpm db:generate
+corepack pnpm dev
+```
 
-This is the brain of the application. It handles all heavy lifting, AI processing, and database interactions.
+Default local URLs:
 
-- **`src/ai/rag.service.ts`:** The "Retrieval-Augmented Generation" engine. It takes uploaded files, parses the text (via `pdf-parse`), chunks it, converts it to vectors via OpenAI, and stores it in Pinecone with strict tenant-isolation metadata.
-- **`src/ai/chat.service.ts`:** The conversational engine. It takes a user's chat message, searches Pinecone for relevant workspace knowledge, constructs a LangChain prompt, and asks OpenAI to generate the final response.
-- **`src/chat/chat.controller.ts`:** The API routes for the chat widget. It exposes endpoints to get the agent's theme/color (`GET /api/chat/:agentId`) and to handle incoming chat messages (`POST /api/chat/message`). It also deducts SaaS tokens from the user's balance here!
-- **`src/knowledge/knowledge.controller.ts`:** Handles multipart file uploads from the Next.js dashboard, creates Document records in MySQL, and triggers the `RagService`.
-- **`src/billing/billing.service.ts & controller.ts`:** Communicates with Stripe. Generates secure checkout session URLs and listens for Stripe Webhooks (`checkout.session.completed`) to instantly upgrade users to the Pro tier and grant them AI tokens.
+- Web: `http://localhost:3000`
+- API: `http://localhost:3001`
+- API docs: `http://localhost:3001/api/docs`
 
-### 2. `apps/web/` (The Next.js Dashboard)
+## Stripe Setup
 
-The SaaS user interface where buyers configure their agents. Built with App Router and Tailwind CSS.
+Set Stripe keys and price IDs in `.env`:
 
-- **`app/layout.tsx & providers.tsx`:** The root shell of the app. It wraps the application in the NextAuth `SessionProvider` so user data is accessible everywhere.
-- **`app/page.tsx`:** The intelligent entry point. It instantly redirects logged-in users to the dashboard and guests to the login page.
-- **`app/dashboard/builder/page.tsx`:** The Agent Builder UI. Contains the form to set the Agent's name, prompt, and color, alongside a beautiful live-updating mock iPhone chat preview.
-- **`app/dashboard/knowledge/page.tsx`:** The Knowledge Base UI. Provides a drag-and-drop zone for users to upload PDFs/TXT files to train their AI.
-- **`app/dashboard/billing/page.tsx`:** The Pricing UI. Displays the Free vs Pro tiers and initiates the Stripe Checkout flow.
-- **`lib/auth.ts`:** The NextAuth configuration. Handles Google OAuth and Credentials login, and automatically provisions new users into the MySQL database upon sign-up.
+```bash
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_STARTER_MONTHLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_STARTER_YEARLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_GROWTH_MONTHLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_GROWTH_YEARLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_BUSINESS_MONTHLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_BUSINESS_YEARLY_PRICE_ID=price_...
+```
 
-### 3. `apps/widget/` (The Embeddable Chat UI)
+The webhook at `/api/webhooks/stripe` maps monthly or yearly price IDs to the
+same plan limits and refreshes `Workspace.tokenBalance` as monthly AI reply
+credits.
 
-The script that SaaS customers put on their own websites.
+## Paddle Setup
 
-- **`src/widget.js`:** A standalone Vanilla JavaScript file wrapped in an IIFE (Immediately Invoked Function Expression). When executed, it creates an isolated `ShadowDOM` so its CSS doesn't conflict with the host website. It fetches its custom branding from the NestJS API, renders the floating chat button, and handles sending/receiving messages to the AI.
-- **`vite.config.js`:** The bundler config. It minifies `widget.js` and outputs the production-ready file directly into the Next.js `apps/web/public` folder so it can be served publicly over the internet.
+Paddle can be used as the global card checkout provider when Stripe is not
+available for your business location. Set:
 
-### 4. `packages/database/` (The Data Layer)
+```bash
+NEXT_PUBLIC_BILLING_PROVIDER=paddle
+PADDLE_ENVIRONMENT=sandbox
+PADDLE_API_KEY=pdl_...
+PADDLE_WEBHOOK_SECRET=...
+PADDLE_CHECKOUT_BASE_URL=https://agentix.ilogicmagic.com/checkout/paddle
+NEXT_PUBLIC_PADDLE_ENVIRONMENT=sandbox
+NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=live_...
+NEXT_PUBLIC_PADDLE_STARTER_MONTHLY_PRICE_ID=pri_...
+NEXT_PUBLIC_PADDLE_STARTER_YEARLY_PRICE_ID=pri_...
+NEXT_PUBLIC_PADDLE_GROWTH_MONTHLY_PRICE_ID=pri_...
+NEXT_PUBLIC_PADDLE_GROWTH_YEARLY_PRICE_ID=pri_...
+NEXT_PUBLIC_PADDLE_BUSINESS_MONTHLY_PRICE_ID=pri_...
+NEXT_PUBLIC_PADDLE_BUSINESS_YEARLY_PRICE_ID=pri_...
+```
 
-Contains everything related to the MySQL relational database.
+Paddle webhooks should point to:
 
-- **`schema.prisma`:** The single source of truth for the database structure. Defines models for `User`, `Workspace`, `WorkspaceMember`, `Agent` (the chatbot settings), and `Document` (uploaded files tracking).
+```text
+https://agentix.ilogicmagic.com/api/webhooks/paddle
+```
 
-### 5. `Root Configurations`
+The Paddle checkout page is:
 
-- **`docker-compose.yml`:** Provisions a local MySQL database (port 3307) and Redis instance instantly, so developers don't have to install databases natively on their machines.
-- **`.env`:** Contains the environment variables needed to run the app (OpenAI Keys, Pinecone Keys, Stripe Secrets, Database URLs).
+```text
+/checkout/paddle
+```
 
----
+Paddle must approve the checkout domain/payment link before live checkout works.
+Webhook activation updates the workspace plan and monthly AI reply balance.
 
-## 🚀 Running the Project Locally
+## Subdomain Deployment Notes
 
-1. **Start the local database:**
-   ```bash
-   docker compose up -d
-   ```
-2. **Sync the Prisma Schema:**
-   ```bash
-   corepack pnpm db:push
-   corepack pnpm db:generate
-   ```
-3. **Start the Development Servers:**
-   ```bash
-   corepack pnpm dev
-   ```
-   _Next.js will run on `http://localhost:3000` and NestJS on `http://localhost:3001`._
+If the host supports subdomain routing, map:
+
+- `agentix.ilogicmagic.com` to the marketing web app `/`
+- `app.agentix.ilogicmagic.com` to the same app, with dashboard/login links
+- `demo.agentix.ilogicmagic.com` to `/demo`
+- `bd.agentix.ilogicmagic.com` to `/bd`
+
+Until subdomain routing is configured, the route-based structure works:
+
+- `/`
+- `/pricing`
+- `/demo`
+- `/bd`
+- `/dashboard`
+
+## Important Audits and Plan
+
+- `docs/AGENTIX_CODEBASE_AUDIT.md`
+- `docs/AGENTIX_TRANSFORMATION_PLAN.md`
+
+## Known Next Work
+
+- Add durable monthly usage events instead of only `Workspace.tokenBalance`.
+- Add full admin-managed annual local client fields: start/end date, notes,
+  active/inactive/expired state, and manual payment metadata.
+- Tighten API authorization for endpoints that currently accept user email
+  parameters.
+- Add Pinecone vector deletion when a document is deleted.

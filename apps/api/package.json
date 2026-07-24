@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@agentix/config": "workspace:*",
     "@agentix/database": "workspace:*",
     "@langchain/community": "^0.3.20",
     "@langchain/core": "^0.3.28",

@@ -7,10 +7,21 @@ async function bootstrap() {
   // Validate required environment variables on startup
   const requiredEnvVars = [
     "DATABASE_URL",
-    "OPENAI_API_KEY",
     "PINECONE_API_KEY",
     "PINECONE_INDEX_NAME",
   ];
+
+  const defaultProvider =
+    process.env.DEFAULT_AI_PROVIDER?.toLowerCase() || "deepseek";
+  if (defaultProvider === "deepseek") {
+    requiredEnvVars.push("DEEPSEEK_API_KEY");
+  } else {
+    requiredEnvVars.push("OPENAI_API_KEY");
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    requiredEnvVars.push("OPENAI_API_KEY");
+  }
 
   const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
   if (missingVars.length > 0) {

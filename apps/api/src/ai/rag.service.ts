@@ -3,15 +3,15 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Document } from "@langchain/core/documents";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { OpenAIEmbeddings } from "@langchain/openai";
 import { Pinecone } from "@pinecone-database/pinecone";
+import { EmbeddingService } from "./embedding.service";
 
 @Injectable()
 export class RagService {
   private readonly logger = new Logger(RagService.name);
   private pinecone: Pinecone;
 
-  constructor() {
+  constructor(private readonly embeddingService: EmbeddingService) {
     // Initialize the Vector Database connection
     this.pinecone = new Pinecone({
       apiKey: process.env.PINECONE_API_KEY || "",
@@ -71,13 +71,6 @@ export class RagService {
 
       this.logger.log(`Split document into ${chunkedDocs.length} chunks.`);
 
-      // 3. EMBEDDING: Convert text to Vectors (numbers)
-      // text-embedding-3-small is OpenAI's newest, fastest, and cheapest embedding model
-      const embeddings = new OpenAIEmbeddings({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-        modelName: "text-embedding-3-small",
-      });
-
       // 4. STORAGE: Prepare data for Pinecone Vector DB
       const pineconeIndex = this.pinecone.Index(
         process.env.PINECONE_INDEX_NAME || "agentix-index",
@@ -90,7 +83,9 @@ export class RagService {
         const chunk = chunkedDocs[i];
 
         // Generate the vector array [0.012, -0.045, ...] for this specific text chunk
-        const vector = await embeddings.embedQuery(chunk.pageContent);
+        const vector = await this.embeddingService.embedQuery(
+          chunk.pageContent,
+        );
 
         vectorsToUpsert.push({
           id: `${documentId}-chunk-${i}`, // Unique ID for this chunk

@@ -43,33 +43,36 @@ const CheckIcon = () => (
 const TIERS = [
   {
     id: "STARTER",
-    name: "Starter",
-    price: "$29",
+    name: SAAS_PRICING.STARTER.name,
+    price: `$${SAAS_PRICING.STARTER.monthlyPrice}`,
     period: "/mo",
     description: "Perfect for small businesses getting started with AI.",
     features: SAAS_PRICING.STARTER.features,
     priceId: SAAS_PRICING.STARTER.monthlyPriceId,
+    paddlePriceId: SAAS_PRICING.STARTER.paddleMonthlyPriceId,
     highlight: false,
   },
   {
     id: "GROWTH",
-    name: "Growth",
-    price: "$79",
+    name: SAAS_PRICING.GROWTH.name,
+    price: `$${SAAS_PRICING.GROWTH.monthlyPrice}`,
     period: "/mo",
     description: "For growing teams that need more power and flexibility.",
     features: SAAS_PRICING.GROWTH.features,
     priceId: SAAS_PRICING.GROWTH.monthlyPriceId,
+    paddlePriceId: SAAS_PRICING.GROWTH.paddleMonthlyPriceId,
     highlight: true,
     badge: "Most Popular",
   },
   {
     id: "ENTERPRISE",
-    name: "Agency",
-    price: "$299",
+    name: SAAS_PRICING.ENTERPRISE.name,
+    price: `$${SAAS_PRICING.ENTERPRISE.monthlyPrice}`,
     period: "/mo",
-    description: "For agencies managing multiple clients at scale.",
+    description: "For businesses that need more chatbots and higher usage.",
     features: SAAS_PRICING.ENTERPRISE.features,
     priceId: SAAS_PRICING.ENTERPRISE.monthlyPriceId,
+    paddlePriceId: SAAS_PRICING.ENTERPRISE.paddleMonthlyPriceId,
     highlight: false,
   },
 ];
@@ -84,6 +87,10 @@ export default function BillingPage() {
 
   const email = session?.user?.email as string | undefined;
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const billingProvider =
+    process.env.NEXT_PUBLIC_BILLING_PROVIDER === "paddle"
+      ? "paddle"
+      : "stripe";
 
   // Fetch current workspace details
   useEffect(() => {
@@ -116,7 +123,7 @@ export default function BillingPage() {
     fetchWorkspace();
   }, [email, API_URL]);
 
-  const handleUpgrade = async (tierId: string, priceId: string) => {
+  const handleUpgrade = async (tierId: string, stripePriceId: string) => {
     if (!email) {
       toast("Session expired. Please log in again.", "error");
       return;
@@ -129,7 +136,21 @@ export default function BillingPage() {
     setIsLoading(tierId);
 
     try {
-      const res = await fetch(`${API_URL}/billing/checkout`, {
+      const tier = TIERS.find((item) => item.id === tierId);
+      const priceId =
+        billingProvider === "paddle"
+          ? tier?.paddlePriceId
+          : stripePriceId;
+
+      if (!priceId) {
+        throw new Error(
+          `${billingProvider === "paddle" ? "Paddle" : "Stripe"} price ID is not configured for this plan.`,
+        );
+      }
+
+      const res = await fetch(
+        `${API_URL}/billing/${billingProvider === "paddle" ? "paddle/checkout" : "checkout"}`,
+        {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,7 +159,8 @@ export default function BillingPage() {
           successUrl: `${window.location.origin}/dashboard/builder?upgraded=true`,
           cancelUrl: `${window.location.origin}/dashboard/billing?canceled=true`,
         }),
-      });
+        },
+      );
 
       const data = await res.json();
 
@@ -147,7 +169,7 @@ export default function BillingPage() {
       }
 
       if (data.url) {
-        toast("Redirecting to Stripe checkout...", "info");
+        toast(`Redirecting to ${data.provider || billingProvider} checkout...`, "info");
         window.location.href = data.url;
       } else {
         throw new Error("No checkout URL returned");
@@ -180,6 +202,9 @@ export default function BillingPage() {
         <p className="text-sm text-gray-500 mt-2">
           Choose the plan that fits your business. Upgrade or downgrade anytime.
         </p>
+        <p className="mt-2 text-xs text-gray-400">
+          Checkout provider: {billingProvider === "paddle" ? "Paddle" : "Stripe"}
+        </p>
 
         <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium">
           <span
@@ -190,7 +215,7 @@ export default function BillingPage() {
           {tokenBalance !== null && currentTier && (
             <>
               <span className="text-indigo-300">|</span>
-              {tokenBalance.toLocaleString()} tokens remaining
+              {tokenBalance.toLocaleString()} AI replies remaining
             </>
           )}
         </div>
@@ -299,8 +324,8 @@ export default function BillingPage() {
 
       {/* Footer Note */}
       <p className="text-center text-xs text-gray-400 mt-12">
-        All plans are billed monthly. You can cancel or change your plan at any
-        time. Payments are securely processed by Stripe.
+        All plans include monthly AI reply limits. Payments are securely
+        processed by Stripe.
       </p>
     </div>
   );

@@ -35,7 +35,7 @@ The Overview tab gives you a bird's-eye view of your business:
 Manage all your customer workspaces:
 
 - **Search** — Filter by name, email, or subscription tier
-- **Filter by Tier** — View only Starter, Growth, or Agency subscribers
+- **Filter by Tier** — View only Starter, Growth, or Business subscribers
 - **Sort** — Click any column header to sort
 - **Edit** — Click "Edit" to change a workspace's tier or token balance
 - **Export CSV** — Download subscriber list as a spreadsheet

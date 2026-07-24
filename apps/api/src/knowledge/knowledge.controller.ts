@@ -14,21 +14,9 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { RagService } from "../ai/rag.service";
 import { PrismaService } from "../database/prisma.service";
+import { getTierLimits } from "@agentix/config/pricing";
 
 const logger = new Logger("KnowledgeController");
-
-function getMaxDocsForTier(tier: string | null): number {
-  switch (tier) {
-    case "STARTER":
-      return 5;
-    case "GROWTH":
-      return 20;
-    case "ENTERPRISE":
-      return 50;
-    default:
-      return 1;
-  }
-}
 
 @Controller("knowledge")
 export class KnowledgeController {
@@ -81,7 +69,9 @@ export class KnowledgeController {
       where: { id: workspaceId },
     });
 
-    const maxDocs = getMaxDocsForTier(workspace?.subscriptionTier || null);
+    const maxDocs = getTierLimits(
+      workspace?.subscriptionTier || null,
+    ).maxStorageDocs;
     logger.log(
       `Document count: ${totalDocs}/${maxDocs} (tier: ${workspace?.subscriptionTier || "none"})`,
     );

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "../../../../lib/prisma";
-import { SAAS_PRICING } from "@agentix/config/pricing";
+import { getPlanByStripePriceId } from "@agentix/config/pricing";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2024-06-20",
@@ -39,9 +39,7 @@ export async function POST(req: Request) {
         );
         const priceId = subscription.items.data[0].price.id;
 
-        const selectedTier = Object.values(SAAS_PRICING).find(
-          (tier) => tier.monthlyPriceId === priceId,
-        );
+        const selectedTier = getPlanByStripePriceId(priceId);
 
         if (!selectedTier)
           throw new Error("Purchased price ID not found in pricing config");
@@ -66,9 +64,7 @@ export async function POST(req: Request) {
         const stripeCustomerId = subscription.customer as string;
         const priceId = subscription.items.data[0].price.id;
 
-        const updatedTier = Object.values(SAAS_PRICING).find(
-          (tier) => tier.monthlyPriceId === priceId,
-        );
+        const updatedTier = getPlanByStripePriceId(priceId);
 
         if (subscription.status === "active" && updatedTier) {
           await prisma.workspace.updateMany({

@@ -12,6 +12,11 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { PrismaService } from "../database/prisma.service";
+import {
+  getMonthlyPrice,
+  getTierLimits,
+  getTierName,
+} from "@agentix/config/pricing";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
@@ -23,6 +28,10 @@ export class AdminController {
     if (adminKey !== ADMIN_PASSWORD) {
       throw new HttpException("Unauthorized", HttpStatus.UNAUTHORIZED);
     }
+  }
+
+  private getReplyLimit(tier: string | null) {
+    return getTierLimits(tier).maxMessagesPerMonth;
   }
 
   @Get("dashboard/stats")
@@ -51,20 +60,13 @@ export class AdminController {
       }),
     ]);
 
-    // Calculate MRR (Monthly Recurring Revenue)
-    const tierPrices: Record<string, number> = {
-      STARTER: 29,
-      GROWTH: 79,
-      ENTERPRISE: 299,
-    };
-
     const workspaces = await this.prisma.workspace.findMany({
       where: { subscriptionTier: { not: null } },
       select: { subscriptionTier: true },
     });
 
     const mrr = workspaces.reduce((sum, w) => {
-      return sum + (tierPrices[w.subscriptionTier!] || 0);
+      return sum + getMonthlyPrice(w.subscriptionTier);
     }, 0);
 
     // New customers today
@@ -78,8 +80,7 @@ export class AdminController {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Active workspaces — those with tokenBalance less than their tier max
-    // (meaning they've used some tokens = they're active)
+    // Active workspaces have used at least one AI reply from their monthly balance.
     const activeClients = await this.prisma.workspace.findMany({
       where: {
         subscriptionTier: { not: null },
@@ -100,22 +101,17 @@ export class AdminController {
     });
 
     const activeClientsWithStatus = activeClients.map((w) => {
-      const tierMax =
-        {
-          STARTER: 500,
-          GROWTH: 5000,
-          ENTERPRISE: 25000,
-        }[w.subscriptionTier!] || 0;
+      const tierMax = this.getReplyLimit(w.subscriptionTier);
 
-      const usedTokens = tierMax - w.tokenBalance;
-      const isActive = usedTokens > 0;
+      const repliesUsed = tierMax - w.tokenBalance;
+      const isActive = repliesUsed > 0;
 
       return {
         id: w.id,
         name: w.name,
         email: w.members[0]?.user.email || "N/A",
         tier: w.subscriptionTier,
-        tokensUsed: usedTokens,
+        tokensUsed: repliesUsed,
         tokensMax: tierMax,
         status: isActive ? "Active" : "Inactive",
         joinedAt: w.createdAt,
@@ -209,15 +205,9 @@ export class AdminController {
         where: { subscriptionTier: { not: null } },
       });
 
-      const tierPrices: Record<string, number> = {
-        STARTER: 29,
-        GROWTH: 79,
-        ENTERPRISE: 299,
-      };
-
       mrrData.push({
         month: monthLabel,
-        mrr: count * 29, // simplified average
+        mrr: count * getMonthlyPrice("STARTER"), // simplified average
       });
     }
 
@@ -304,22 +294,14 @@ export class AdminController {
       throw new HttpException("Workspace not found", HttpStatus.NOT_FOUND);
     }
 
-    const tierPrices: Record<string, number> = {
-      STARTER: 29,
-      GROWTH: 79,
-      ENTERPRISE: 299,
-    };
-
     const tierMax = workspace.subscriptionTier
-      ? { STARTER: 500, GROWTH: 5000, ENTERPRISE: 25000 }[
-          workspace.subscriptionTier
-        ] || 0
+      ? this.getReplyLimit(workspace.subscriptionTier)
       : 0;
 
     return {
       ...workspace,
       tierPrice: workspace.subscriptionTier
-        ? tierPrices[workspace.subscriptionTier] || 0
+        ? getMonthlyPrice(workspace.subscriptionTier)
         : 0,
       tierMaxTokens: tierMax,
       tokensUsed: tierMax - workspace.tokenBalance,
@@ -332,13 +314,6 @@ export class AdminController {
   @Get("analytics/revenue")
   async getRevenueAnalytics(@Headers("x-admin-key") adminKey: string) {
     this.validateAdmin(adminKey);
-
-    const tierPrices: Record<string, number> = {
-      STARTER: 29,
-      GROWTH: 79,
-      ENTERPRISE: 299,
-    };
-
     // Get all subscribed workspaces
     const workspaces = await this.prisma.workspace.findMany({
       where: { subscriptionTier: { not: null } },
@@ -347,7 +322,7 @@ export class AdminController {
 
     // Total revenue
     const totalRevenue = workspaces.reduce((sum, w) => {
-      return sum + (tierPrices[w.subscriptionTier!] || 0);
+      return sum + getMonthlyPrice(w.subscriptionTier);
     }, 0);
 
     // Revenue by tier
@@ -363,13 +338,8 @@ export class AdminController {
     });
 
     const revenueByTier = Object.entries(tierCounts).map(([tier, count]) => ({
-      name:
-        tier === "STARTER"
-          ? "Starter"
-          : tier === "GROWTH"
-            ? "Growth"
-            : "Agency",
-      value: count * (tierPrices[tier] || 0),
+      name: getTierName(tier),
+      value: count * getMonthlyPrice(tier),
       subscribers: count,
       color:
         tier === "STARTER"
@@ -401,7 +371,7 @@ export class AdminController {
 
       mrrHistory.push({
         month: monthLabel,
-        mrr: count * 29, // Simplified average
+        mrr: count * getMonthlyPrice("STARTER"), // Simplified average
         subscribers: count,
       });
     }
@@ -418,21 +388,14 @@ export class AdminController {
   async getUsageAnalytics(@Headers("x-admin-key") adminKey: string) {
     this.validateAdmin(adminKey);
 
-    // Total tokens across all workspaces
+    // Total AI replies across all workspaces
     const workspaces = await this.prisma.workspace.findMany({
       where: { subscriptionTier: { not: null } },
       select: { subscriptionTier: true, tokenBalance: true, name: true },
     });
 
-    // Tokens consumed (tier max - current balance)
-    const tierMaxMap: Record<string, number> = {
-      STARTER: 500,
-      GROWTH: 5000,
-      ENTERPRISE: 25000,
-    };
-
     const totalTokensAllocated = workspaces.reduce((sum, w) => {
-      return sum + (tierMaxMap[w.subscriptionTier!] || 0);
+      return sum + this.getReplyLimit(w.subscriptionTier);
     }, 0);
 
     const totalTokensRemaining = workspaces.reduce((sum, w) => {
@@ -446,9 +409,9 @@ export class AdminController {
       .map((w) => ({
         name: w.name,
         tier: w.subscriptionTier,
-        allocated: tierMaxMap[w.subscriptionTier!] || 0,
+        allocated: this.getReplyLimit(w.subscriptionTier),
         remaining: w.tokenBalance,
-        consumed: (tierMaxMap[w.subscriptionTier!] || 0) - w.tokenBalance,
+        consumed: this.getReplyLimit(w.subscriptionTier) - w.tokenBalance,
       }))
       .sort((a, b) => b.consumed - a.consumed)
       .slice(0, 10);
@@ -547,18 +510,19 @@ export class AdminController {
 
     const integrations = [
       {
-        service: "openai",
-        name: "OpenAI",
-        status: process.env.OPENAI_API_KEY ? "connected" : "disconnected",
-        message: process.env.OPENAI_API_KEY
-          ? "Connected to OpenAI API. GPT-4o-mini and embedding models available."
-          : "OpenAI API key not configured. AI features will not work.",
+        service: "ai",
+        name: "AI Providers",
+        status:
+          process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY
+            ? "connected"
+            : "disconnected",
+        message: process.env.DEEPSEEK_API_KEY
+          ? "DeepSeek chat provider configured. OpenAI remains available for fallback and embeddings."
+          : "DeepSeek API key not configured. Chat fallback depends on OpenAI configuration.",
         details: [
-          "Model: gpt-4o-mini (chat), text-embedding-3-small (embeddings)",
-          "Usage dashboard: platform.openai.com/usage",
-          process.env.OPENAI_API_KEY
-            ? "API key: ****" + process.env.OPENAI_API_KEY.slice(-4)
-            : "Not configured",
+          `Default provider: ${process.env.DEFAULT_AI_PROVIDER || "deepseek"}`,
+          `Fallback provider: ${process.env.FALLBACK_AI_PROVIDER || "openai"}`,
+          `Embedding model: ${process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small"}`,
         ],
       },
       {

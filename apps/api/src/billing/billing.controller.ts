@@ -22,4 +22,22 @@ export class BillingController {
       cancelUrl,
     );
   }
+
+  @Post("paddle/checkout")
+  async createPaddleCheckout(
+    @Body("email") email: string,
+    @Body("priceId") priceId: string,
+    @Body("successUrl") successUrl: string,
+    @Body("cancelUrl") cancelUrl: string,
+  ) {
+    if (!email || !priceId) {
+      throw new BadRequestException("Missing email or priceId");
+    }
+    return this.billingService.createPaddleCheckout(
+      email,
+      priceId,
+      successUrl,
+      cancelUrl,
+    );
+  }
 }

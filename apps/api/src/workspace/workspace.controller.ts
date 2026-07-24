@@ -6,39 +6,7 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { PrismaService } from "../database/prisma.service";
-
-function getTierLimits(tier: string | null) {
-  switch (tier) {
-    case "STARTER":
-      return {
-        maxAgents: 1,
-        maxMessagesPerMonth: 500,
-        maxStorageDocs: 5,
-        name: "Starter",
-      };
-    case "GROWTH":
-      return {
-        maxAgents: 5,
-        maxMessagesPerMonth: 5000,
-        maxStorageDocs: 20,
-        name: "Growth",
-      };
-    case "ENTERPRISE":
-      return {
-        maxAgents: 20,
-        maxMessagesPerMonth: 25000,
-        maxStorageDocs: 50,
-        name: "Agency",
-      };
-    default:
-      return {
-        maxAgents: 1,
-        maxMessagesPerMonth: 0,
-        maxStorageDocs: 1,
-        name: "No Plan",
-      };
-  }
-}
+import { getTierLimits, getTierName } from "@agentix/config/pricing";
 
 @Controller("api/workspace")
 export class WorkspaceController {
@@ -70,7 +38,11 @@ export class WorkspaceController {
       },
     });
 
-    const tierLimits = getTierLimits(workspace?.subscriptionTier || null);
+    const tier = workspace?.subscriptionTier || null;
+    const tierLimits = {
+      ...getTierLimits(tier),
+      name: getTierName(tier),
+    };
     const agentCount = await this.prisma.agent.count({
       where: { workspaceId },
     });

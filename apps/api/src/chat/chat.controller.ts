@@ -12,24 +12,12 @@ import {
 import { Throttle } from "@nestjs/throttler";
 import { ChatService } from "../ai/chat.service";
 import { PrismaService } from "../database/prisma.service";
+import { getTierLimits } from "@agentix/config/pricing";
 
 interface ChatRequestDto {
   agentId: string;
   message: string;
   sessionId?: string;
-}
-
-function getTierLimits(tier: string | null) {
-  switch (tier) {
-    case "STARTER":
-      return { maxAgents: 1, maxMessagesPerMonth: 500 };
-    case "GROWTH":
-      return { maxAgents: 5, maxMessagesPerMonth: 5000 };
-    case "ENTERPRISE":
-      return { maxAgents: 20, maxMessagesPerMonth: 25000 };
-    default:
-      return { maxAgents: 1, maxMessagesPerMonth: 0 };
-  }
 }
 
 @Controller("api/chat")
@@ -189,7 +177,7 @@ export class ChatController {
       if (agent.workspace.tokenBalance <= 0) {
         return {
           reply:
-            "This AI agent has reached its monthly message limit. Please contact the site owner to upgrade their plan.",
+            "This AI agent has reached its monthly AI reply limit. Please contact the site owner to upgrade their plan.",
         };
       }
 

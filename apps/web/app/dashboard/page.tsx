@@ -29,8 +29,7 @@ const cards = [
   {
     title: "Agent Builder",
     href: "/dashboard/builder",
-    description:
-      "Customize your AI's name, personality, model, and brand color.",
+    description: "Customize your AI's name, personality, and brand color.",
     icon: (
       <svg
         className="w-8 h-8 text-indigo-600"

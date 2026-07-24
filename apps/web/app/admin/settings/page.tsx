@@ -393,7 +393,7 @@ export default function SettingsPage() {
                 />
                 <InputField
                   label="Trial Tokens"
-                  description="How many AI message tokens does the trial include?"
+                  description="How many AI replies does the trial include?"
                   value={settings?.trialTokens || 100}
                   onChange={(v) =>
                     updateSetting("trialTokens", parseInt(v) || 0)

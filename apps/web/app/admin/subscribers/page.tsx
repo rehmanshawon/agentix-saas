@@ -206,7 +206,7 @@ export default function SubscribersPage() {
       GROWTH: { color: "bg-indigo-900/50 text-indigo-400", label: "Growth" },
       ENTERPRISE: {
         color: "bg-purple-900/50 text-purple-400",
-        label: "Agency",
+      label: "Business",
       },
     };
     return styles[tier] || { color: "bg-gray-800 text-gray-400", label: tier };
@@ -263,7 +263,7 @@ export default function SubscribersPage() {
           <option value="none">No Plan</option>
           <option value="STARTER">Starter</option>
           <option value="GROWTH">Growth</option>
-          <option value="ENTERPRISE">Agency</option>
+          <option value="ENTERPRISE">Business</option>
         </select>
       </div>
 
@@ -298,7 +298,7 @@ export default function SubscribersPage() {
                     className="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase cursor-pointer hover:text-white"
                     onClick={() => handleSort("tokens")}
                   >
-                    Tokens <SortIcon field="tokens" />
+                    AI Replies <SortIcon field="tokens" />
                   </th>
                   <th
                     className="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase cursor-pointer hover:text-white"
@@ -361,7 +361,7 @@ export default function SubscribersPage() {
                             <option value="none">No Plan</option>
                             <option value="STARTER">Starter</option>
                             <option value="GROWTH">Growth</option>
-                            <option value="ENTERPRISE">Agency</option>
+                            <option value="ENTERPRISE">Business</option>
                           </select>
                         ) : (
                           <span

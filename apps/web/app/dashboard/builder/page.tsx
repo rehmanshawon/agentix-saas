@@ -66,7 +66,7 @@ export default function AgentBuilderPage() {
   const [systemPrompt, setSystemPrompt] = useState(
     "You are a helpful and polite customer support assistant. Only answer questions using the uploaded company documents.",
   );
-  const [model, setModel] = useState("gpt-4o-mini");
+  const [model, setModel] = useState("default");
   const [primaryColor, setPrimaryColor] = useState("#4F46E5");
   const [isSaving, setIsSaving] = useState(false);
   const [agentId, setAgentId] = useState<string>("");
@@ -116,7 +116,7 @@ export default function AgentBuilderPage() {
         if (agent) {
           setAgentName(agent.name || "SupportBot");
           setSystemPrompt(agent.systemPrompt || "");
-          setModel(agent.modelName || "gpt-4o-mini");
+          setModel(agent.modelName || "default");
           setPrimaryColor(agent.colorHex || "#4F46E5");
           setAgentId(agent.id);
         }
@@ -351,20 +351,18 @@ export default function AgentBuilderPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                AI Brain (Model)
+                Assistant Engine
               </label>
               <p className="text-xs text-gray-500 mb-2">
-                Select the underlying language model.
+                Use the platform default engine for affordable, reliable
+                answers.
               </p>
               <select
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all bg-white"
               >
-                <option value="gpt-4o-mini">
-                  OpenAI: GPT-4o-Mini (Fastest, Cost-Effective)
-                </option>
-                <option value="gpt-4o">OpenAI: GPT-4o (Most Capable)</option>
+                <option value="default">Platform default</option>
               </select>
             </div>
 
