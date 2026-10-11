@@ -48,6 +48,11 @@ export type PasswordResetToken = $Result.DefaultSelection<Prisma.$PasswordResetT
  * 
  */
 export type OutgoingWebhook = $Result.DefaultSelection<Prisma.$OutgoingWebhookPayload>
+/**
+ * Model WorkspaceMonthlyUsage
+ * 
+ */
+export type WorkspaceMonthlyUsage = $Result.DefaultSelection<Prisma.$WorkspaceMonthlyUsagePayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -241,6 +246,16 @@ export class PrismaClient<
     * ```
     */
   get outgoingWebhook(): Prisma.OutgoingWebhookDelegate<ExtArgs>;
+
+  /**
+   * `prisma.workspaceMonthlyUsage`: Exposes CRUD operations for the **WorkspaceMonthlyUsage** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkspaceMonthlyUsages
+    * const workspaceMonthlyUsages = await prisma.workspaceMonthlyUsage.findMany()
+    * ```
+    */
+  get workspaceMonthlyUsage(): Prisma.WorkspaceMonthlyUsageDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -688,7 +703,8 @@ export namespace Prisma {
     Agent: 'Agent',
     Document: 'Document',
     PasswordResetToken: 'PasswordResetToken',
-    OutgoingWebhook: 'OutgoingWebhook'
+    OutgoingWebhook: 'OutgoingWebhook',
+    WorkspaceMonthlyUsage: 'WorkspaceMonthlyUsage'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -704,7 +720,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "workspace" | "workspaceMember" | "agent" | "document" | "passwordResetToken" | "outgoingWebhook"
+      modelProps: "user" | "workspace" | "workspaceMember" | "agent" | "document" | "passwordResetToken" | "outgoingWebhook" | "workspaceMonthlyUsage"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1170,6 +1186,72 @@ export namespace Prisma {
           }
         }
       }
+      WorkspaceMonthlyUsage: {
+        payload: Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>
+        fields: Prisma.WorkspaceMonthlyUsageFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkspaceMonthlyUsageFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkspaceMonthlyUsagePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkspaceMonthlyUsageFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkspaceMonthlyUsagePayload>
+          }
+          findFirst: {
+            args: Prisma.WorkspaceMonthlyUsageFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkspaceMonthlyUsagePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkspaceMonthlyUsageFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkspaceMonthlyUsagePayload>
+          }
+          findMany: {
+            args: Prisma.WorkspaceMonthlyUsageFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkspaceMonthlyUsagePayload>[]
+          }
+          create: {
+            args: Prisma.WorkspaceMonthlyUsageCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkspaceMonthlyUsagePayload>
+          }
+          createMany: {
+            args: Prisma.WorkspaceMonthlyUsageCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.WorkspaceMonthlyUsageDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkspaceMonthlyUsagePayload>
+          }
+          update: {
+            args: Prisma.WorkspaceMonthlyUsageUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkspaceMonthlyUsagePayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkspaceMonthlyUsageDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkspaceMonthlyUsageUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.WorkspaceMonthlyUsageUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkspaceMonthlyUsagePayload>
+          }
+          aggregate: {
+            args: Prisma.WorkspaceMonthlyUsageAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkspaceMonthlyUsage>
+          }
+          groupBy: {
+            args: Prisma.WorkspaceMonthlyUsageGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkspaceMonthlyUsageGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkspaceMonthlyUsageCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkspaceMonthlyUsageCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1374,12 +1456,14 @@ export namespace Prisma {
     members: number
     agents: number
     documents: number
+    monthlyUsage: number
   }
 
   export type WorkspaceCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     members?: boolean | WorkspaceCountOutputTypeCountMembersArgs
     agents?: boolean | WorkspaceCountOutputTypeCountAgentsArgs
     documents?: boolean | WorkspaceCountOutputTypeCountDocumentsArgs
+    monthlyUsage?: boolean | WorkspaceCountOutputTypeCountMonthlyUsageArgs
   }
 
   // Custom InputTypes
@@ -1412,6 +1496,13 @@ export namespace Prisma {
    */
   export type WorkspaceCountOutputTypeCountDocumentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: DocumentWhereInput
+  }
+
+  /**
+   * WorkspaceCountOutputType without action
+   */
+  export type WorkspaceCountOutputTypeCountMonthlyUsageArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkspaceMonthlyUsageWhereInput
   }
 
 
@@ -2399,10 +2490,12 @@ export namespace Prisma {
   }
 
   export type WorkspaceAvgAggregateOutputType = {
+    monthlyReplyLimit: number | null
     tokenBalance: number | null
   }
 
   export type WorkspaceSumAggregateOutputType = {
+    monthlyReplyLimit: number | null
     tokenBalance: number | null
   }
 
@@ -2411,6 +2504,12 @@ export namespace Prisma {
     name: string | null
     stripeCustomerId: string | null
     subscriptionTier: string | null
+    subscriptionStatus: string | null
+    billingProvider: string | null
+    subscriptionStartDate: Date | null
+    subscriptionExpiresAt: Date | null
+    subscriptionNotes: string | null
+    monthlyReplyLimit: number | null
     tokenBalance: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2421,6 +2520,12 @@ export namespace Prisma {
     name: string | null
     stripeCustomerId: string | null
     subscriptionTier: string | null
+    subscriptionStatus: string | null
+    billingProvider: string | null
+    subscriptionStartDate: Date | null
+    subscriptionExpiresAt: Date | null
+    subscriptionNotes: string | null
+    monthlyReplyLimit: number | null
     tokenBalance: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -2431,6 +2536,12 @@ export namespace Prisma {
     name: number
     stripeCustomerId: number
     subscriptionTier: number
+    subscriptionStatus: number
+    billingProvider: number
+    subscriptionStartDate: number
+    subscriptionExpiresAt: number
+    subscriptionNotes: number
+    monthlyReplyLimit: number
     tokenBalance: number
     createdAt: number
     updatedAt: number
@@ -2439,10 +2550,12 @@ export namespace Prisma {
 
 
   export type WorkspaceAvgAggregateInputType = {
+    monthlyReplyLimit?: true
     tokenBalance?: true
   }
 
   export type WorkspaceSumAggregateInputType = {
+    monthlyReplyLimit?: true
     tokenBalance?: true
   }
 
@@ -2451,6 +2564,12 @@ export namespace Prisma {
     name?: true
     stripeCustomerId?: true
     subscriptionTier?: true
+    subscriptionStatus?: true
+    billingProvider?: true
+    subscriptionStartDate?: true
+    subscriptionExpiresAt?: true
+    subscriptionNotes?: true
+    monthlyReplyLimit?: true
     tokenBalance?: true
     createdAt?: true
     updatedAt?: true
@@ -2461,6 +2580,12 @@ export namespace Prisma {
     name?: true
     stripeCustomerId?: true
     subscriptionTier?: true
+    subscriptionStatus?: true
+    billingProvider?: true
+    subscriptionStartDate?: true
+    subscriptionExpiresAt?: true
+    subscriptionNotes?: true
+    monthlyReplyLimit?: true
     tokenBalance?: true
     createdAt?: true
     updatedAt?: true
@@ -2471,6 +2596,12 @@ export namespace Prisma {
     name?: true
     stripeCustomerId?: true
     subscriptionTier?: true
+    subscriptionStatus?: true
+    billingProvider?: true
+    subscriptionStartDate?: true
+    subscriptionExpiresAt?: true
+    subscriptionNotes?: true
+    monthlyReplyLimit?: true
     tokenBalance?: true
     createdAt?: true
     updatedAt?: true
@@ -2568,6 +2699,12 @@ export namespace Prisma {
     name: string
     stripeCustomerId: string | null
     subscriptionTier: string | null
+    subscriptionStatus: string | null
+    billingProvider: string | null
+    subscriptionStartDate: Date | null
+    subscriptionExpiresAt: Date | null
+    subscriptionNotes: string | null
+    monthlyReplyLimit: number | null
     tokenBalance: number
     createdAt: Date
     updatedAt: Date
@@ -2597,12 +2734,19 @@ export namespace Prisma {
     name?: boolean
     stripeCustomerId?: boolean
     subscriptionTier?: boolean
+    subscriptionStatus?: boolean
+    billingProvider?: boolean
+    subscriptionStartDate?: boolean
+    subscriptionExpiresAt?: boolean
+    subscriptionNotes?: boolean
+    monthlyReplyLimit?: boolean
     tokenBalance?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     members?: boolean | Workspace$membersArgs<ExtArgs>
     agents?: boolean | Workspace$agentsArgs<ExtArgs>
     documents?: boolean | Workspace$documentsArgs<ExtArgs>
+    monthlyUsage?: boolean | Workspace$monthlyUsageArgs<ExtArgs>
     _count?: boolean | WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workspace"]>
 
@@ -2612,6 +2756,12 @@ export namespace Prisma {
     name?: boolean
     stripeCustomerId?: boolean
     subscriptionTier?: boolean
+    subscriptionStatus?: boolean
+    billingProvider?: boolean
+    subscriptionStartDate?: boolean
+    subscriptionExpiresAt?: boolean
+    subscriptionNotes?: boolean
+    monthlyReplyLimit?: boolean
     tokenBalance?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2621,6 +2771,7 @@ export namespace Prisma {
     members?: boolean | Workspace$membersArgs<ExtArgs>
     agents?: boolean | Workspace$agentsArgs<ExtArgs>
     documents?: boolean | Workspace$documentsArgs<ExtArgs>
+    monthlyUsage?: boolean | Workspace$monthlyUsageArgs<ExtArgs>
     _count?: boolean | WorkspaceCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -2630,12 +2781,19 @@ export namespace Prisma {
       members: Prisma.$WorkspaceMemberPayload<ExtArgs>[]
       agents: Prisma.$AgentPayload<ExtArgs>[]
       documents: Prisma.$DocumentPayload<ExtArgs>[]
+      monthlyUsage: Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
       stripeCustomerId: string | null
       subscriptionTier: string | null
+      subscriptionStatus: string | null
+      billingProvider: string | null
+      subscriptionStartDate: Date | null
+      subscriptionExpiresAt: Date | null
+      subscriptionNotes: string | null
+      monthlyReplyLimit: number | null
       tokenBalance: number
       createdAt: Date
       updatedAt: Date
@@ -2982,6 +3140,7 @@ export namespace Prisma {
     members<T extends Workspace$membersArgs<ExtArgs> = {}>(args?: Subset<T, Workspace$membersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkspaceMemberPayload<ExtArgs>, T, "findMany"> | Null>
     agents<T extends Workspace$agentsArgs<ExtArgs> = {}>(args?: Subset<T, Workspace$agentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentPayload<ExtArgs>, T, "findMany"> | Null>
     documents<T extends Workspace$documentsArgs<ExtArgs> = {}>(args?: Subset<T, Workspace$documentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentPayload<ExtArgs>, T, "findMany"> | Null>
+    monthlyUsage<T extends Workspace$monthlyUsageArgs<ExtArgs> = {}>(args?: Subset<T, Workspace$monthlyUsageArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3015,6 +3174,12 @@ export namespace Prisma {
     readonly name: FieldRef<"Workspace", 'String'>
     readonly stripeCustomerId: FieldRef<"Workspace", 'String'>
     readonly subscriptionTier: FieldRef<"Workspace", 'String'>
+    readonly subscriptionStatus: FieldRef<"Workspace", 'String'>
+    readonly billingProvider: FieldRef<"Workspace", 'String'>
+    readonly subscriptionStartDate: FieldRef<"Workspace", 'DateTime'>
+    readonly subscriptionExpiresAt: FieldRef<"Workspace", 'DateTime'>
+    readonly subscriptionNotes: FieldRef<"Workspace", 'String'>
+    readonly monthlyReplyLimit: FieldRef<"Workspace", 'Int'>
     readonly tokenBalance: FieldRef<"Workspace", 'Int'>
     readonly createdAt: FieldRef<"Workspace", 'DateTime'>
     readonly updatedAt: FieldRef<"Workspace", 'DateTime'>
@@ -3374,6 +3539,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: DocumentScalarFieldEnum | DocumentScalarFieldEnum[]
+  }
+
+  /**
+   * Workspace.monthlyUsage
+   */
+  export type Workspace$monthlyUsageArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    where?: WorkspaceMonthlyUsageWhereInput
+    orderBy?: WorkspaceMonthlyUsageOrderByWithRelationInput | WorkspaceMonthlyUsageOrderByWithRelationInput[]
+    cursor?: WorkspaceMonthlyUsageWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkspaceMonthlyUsageScalarFieldEnum | WorkspaceMonthlyUsageScalarFieldEnum[]
   }
 
   /**
@@ -7899,6 +8084,930 @@ export namespace Prisma {
 
 
   /**
+   * Model WorkspaceMonthlyUsage
+   */
+
+  export type AggregateWorkspaceMonthlyUsage = {
+    _count: WorkspaceMonthlyUsageCountAggregateOutputType | null
+    _avg: WorkspaceMonthlyUsageAvgAggregateOutputType | null
+    _sum: WorkspaceMonthlyUsageSumAggregateOutputType | null
+    _min: WorkspaceMonthlyUsageMinAggregateOutputType | null
+    _max: WorkspaceMonthlyUsageMaxAggregateOutputType | null
+  }
+
+  export type WorkspaceMonthlyUsageAvgAggregateOutputType = {
+    aiReplies: number | null
+  }
+
+  export type WorkspaceMonthlyUsageSumAggregateOutputType = {
+    aiReplies: number | null
+  }
+
+  export type WorkspaceMonthlyUsageMinAggregateOutputType = {
+    id: string | null
+    workspaceId: string | null
+    monthStart: Date | null
+    aiReplies: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkspaceMonthlyUsageMaxAggregateOutputType = {
+    id: string | null
+    workspaceId: string | null
+    monthStart: Date | null
+    aiReplies: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkspaceMonthlyUsageCountAggregateOutputType = {
+    id: number
+    workspaceId: number
+    monthStart: number
+    aiReplies: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkspaceMonthlyUsageAvgAggregateInputType = {
+    aiReplies?: true
+  }
+
+  export type WorkspaceMonthlyUsageSumAggregateInputType = {
+    aiReplies?: true
+  }
+
+  export type WorkspaceMonthlyUsageMinAggregateInputType = {
+    id?: true
+    workspaceId?: true
+    monthStart?: true
+    aiReplies?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkspaceMonthlyUsageMaxAggregateInputType = {
+    id?: true
+    workspaceId?: true
+    monthStart?: true
+    aiReplies?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkspaceMonthlyUsageCountAggregateInputType = {
+    id?: true
+    workspaceId?: true
+    monthStart?: true
+    aiReplies?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkspaceMonthlyUsageAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkspaceMonthlyUsage to aggregate.
+     */
+    where?: WorkspaceMonthlyUsageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkspaceMonthlyUsages to fetch.
+     */
+    orderBy?: WorkspaceMonthlyUsageOrderByWithRelationInput | WorkspaceMonthlyUsageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkspaceMonthlyUsageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkspaceMonthlyUsages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkspaceMonthlyUsages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkspaceMonthlyUsages
+    **/
+    _count?: true | WorkspaceMonthlyUsageCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkspaceMonthlyUsageAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkspaceMonthlyUsageSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkspaceMonthlyUsageMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkspaceMonthlyUsageMaxAggregateInputType
+  }
+
+  export type GetWorkspaceMonthlyUsageAggregateType<T extends WorkspaceMonthlyUsageAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkspaceMonthlyUsage]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkspaceMonthlyUsage[P]>
+      : GetScalarType<T[P], AggregateWorkspaceMonthlyUsage[P]>
+  }
+
+
+
+
+  export type WorkspaceMonthlyUsageGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkspaceMonthlyUsageWhereInput
+    orderBy?: WorkspaceMonthlyUsageOrderByWithAggregationInput | WorkspaceMonthlyUsageOrderByWithAggregationInput[]
+    by: WorkspaceMonthlyUsageScalarFieldEnum[] | WorkspaceMonthlyUsageScalarFieldEnum
+    having?: WorkspaceMonthlyUsageScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkspaceMonthlyUsageCountAggregateInputType | true
+    _avg?: WorkspaceMonthlyUsageAvgAggregateInputType
+    _sum?: WorkspaceMonthlyUsageSumAggregateInputType
+    _min?: WorkspaceMonthlyUsageMinAggregateInputType
+    _max?: WorkspaceMonthlyUsageMaxAggregateInputType
+  }
+
+  export type WorkspaceMonthlyUsageGroupByOutputType = {
+    id: string
+    workspaceId: string
+    monthStart: Date
+    aiReplies: number
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkspaceMonthlyUsageCountAggregateOutputType | null
+    _avg: WorkspaceMonthlyUsageAvgAggregateOutputType | null
+    _sum: WorkspaceMonthlyUsageSumAggregateOutputType | null
+    _min: WorkspaceMonthlyUsageMinAggregateOutputType | null
+    _max: WorkspaceMonthlyUsageMaxAggregateOutputType | null
+  }
+
+  type GetWorkspaceMonthlyUsageGroupByPayload<T extends WorkspaceMonthlyUsageGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkspaceMonthlyUsageGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkspaceMonthlyUsageGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkspaceMonthlyUsageGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkspaceMonthlyUsageGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkspaceMonthlyUsageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workspaceId?: boolean
+    monthStart?: boolean
+    aiReplies?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workspace?: boolean | WorkspaceDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workspaceMonthlyUsage"]>
+
+
+  export type WorkspaceMonthlyUsageSelectScalar = {
+    id?: boolean
+    workspaceId?: boolean
+    monthStart?: boolean
+    aiReplies?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkspaceMonthlyUsageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workspace?: boolean | WorkspaceDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkspaceMonthlyUsagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkspaceMonthlyUsage"
+    objects: {
+      workspace: Prisma.$WorkspacePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workspaceId: string
+      monthStart: Date
+      aiReplies: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workspaceMonthlyUsage"]>
+    composites: {}
+  }
+
+  type WorkspaceMonthlyUsageGetPayload<S extends boolean | null | undefined | WorkspaceMonthlyUsageDefaultArgs> = $Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload, S>
+
+  type WorkspaceMonthlyUsageCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<WorkspaceMonthlyUsageFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: WorkspaceMonthlyUsageCountAggregateInputType | true
+    }
+
+  export interface WorkspaceMonthlyUsageDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkspaceMonthlyUsage'], meta: { name: 'WorkspaceMonthlyUsage' } }
+    /**
+     * Find zero or one WorkspaceMonthlyUsage that matches the filter.
+     * @param {WorkspaceMonthlyUsageFindUniqueArgs} args - Arguments to find a WorkspaceMonthlyUsage
+     * @example
+     * // Get one WorkspaceMonthlyUsage
+     * const workspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkspaceMonthlyUsageFindUniqueArgs>(args: SelectSubset<T, WorkspaceMonthlyUsageFindUniqueArgs<ExtArgs>>): Prisma__WorkspaceMonthlyUsageClient<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one WorkspaceMonthlyUsage that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {WorkspaceMonthlyUsageFindUniqueOrThrowArgs} args - Arguments to find a WorkspaceMonthlyUsage
+     * @example
+     * // Get one WorkspaceMonthlyUsage
+     * const workspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkspaceMonthlyUsageFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkspaceMonthlyUsageFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkspaceMonthlyUsageClient<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first WorkspaceMonthlyUsage that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkspaceMonthlyUsageFindFirstArgs} args - Arguments to find a WorkspaceMonthlyUsage
+     * @example
+     * // Get one WorkspaceMonthlyUsage
+     * const workspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkspaceMonthlyUsageFindFirstArgs>(args?: SelectSubset<T, WorkspaceMonthlyUsageFindFirstArgs<ExtArgs>>): Prisma__WorkspaceMonthlyUsageClient<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first WorkspaceMonthlyUsage that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkspaceMonthlyUsageFindFirstOrThrowArgs} args - Arguments to find a WorkspaceMonthlyUsage
+     * @example
+     * // Get one WorkspaceMonthlyUsage
+     * const workspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkspaceMonthlyUsageFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkspaceMonthlyUsageFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkspaceMonthlyUsageClient<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more WorkspaceMonthlyUsages that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkspaceMonthlyUsageFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkspaceMonthlyUsages
+     * const workspaceMonthlyUsages = await prisma.workspaceMonthlyUsage.findMany()
+     * 
+     * // Get first 10 WorkspaceMonthlyUsages
+     * const workspaceMonthlyUsages = await prisma.workspaceMonthlyUsage.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workspaceMonthlyUsageWithIdOnly = await prisma.workspaceMonthlyUsage.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkspaceMonthlyUsageFindManyArgs>(args?: SelectSubset<T, WorkspaceMonthlyUsageFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a WorkspaceMonthlyUsage.
+     * @param {WorkspaceMonthlyUsageCreateArgs} args - Arguments to create a WorkspaceMonthlyUsage.
+     * @example
+     * // Create one WorkspaceMonthlyUsage
+     * const WorkspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.create({
+     *   data: {
+     *     // ... data to create a WorkspaceMonthlyUsage
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkspaceMonthlyUsageCreateArgs>(args: SelectSubset<T, WorkspaceMonthlyUsageCreateArgs<ExtArgs>>): Prisma__WorkspaceMonthlyUsageClient<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many WorkspaceMonthlyUsages.
+     * @param {WorkspaceMonthlyUsageCreateManyArgs} args - Arguments to create many WorkspaceMonthlyUsages.
+     * @example
+     * // Create many WorkspaceMonthlyUsages
+     * const workspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkspaceMonthlyUsageCreateManyArgs>(args?: SelectSubset<T, WorkspaceMonthlyUsageCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a WorkspaceMonthlyUsage.
+     * @param {WorkspaceMonthlyUsageDeleteArgs} args - Arguments to delete one WorkspaceMonthlyUsage.
+     * @example
+     * // Delete one WorkspaceMonthlyUsage
+     * const WorkspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.delete({
+     *   where: {
+     *     // ... filter to delete one WorkspaceMonthlyUsage
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkspaceMonthlyUsageDeleteArgs>(args: SelectSubset<T, WorkspaceMonthlyUsageDeleteArgs<ExtArgs>>): Prisma__WorkspaceMonthlyUsageClient<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one WorkspaceMonthlyUsage.
+     * @param {WorkspaceMonthlyUsageUpdateArgs} args - Arguments to update one WorkspaceMonthlyUsage.
+     * @example
+     * // Update one WorkspaceMonthlyUsage
+     * const workspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkspaceMonthlyUsageUpdateArgs>(args: SelectSubset<T, WorkspaceMonthlyUsageUpdateArgs<ExtArgs>>): Prisma__WorkspaceMonthlyUsageClient<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more WorkspaceMonthlyUsages.
+     * @param {WorkspaceMonthlyUsageDeleteManyArgs} args - Arguments to filter WorkspaceMonthlyUsages to delete.
+     * @example
+     * // Delete a few WorkspaceMonthlyUsages
+     * const { count } = await prisma.workspaceMonthlyUsage.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkspaceMonthlyUsageDeleteManyArgs>(args?: SelectSubset<T, WorkspaceMonthlyUsageDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkspaceMonthlyUsages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkspaceMonthlyUsageUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkspaceMonthlyUsages
+     * const workspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkspaceMonthlyUsageUpdateManyArgs>(args: SelectSubset<T, WorkspaceMonthlyUsageUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one WorkspaceMonthlyUsage.
+     * @param {WorkspaceMonthlyUsageUpsertArgs} args - Arguments to update or create a WorkspaceMonthlyUsage.
+     * @example
+     * // Update or create a WorkspaceMonthlyUsage
+     * const workspaceMonthlyUsage = await prisma.workspaceMonthlyUsage.upsert({
+     *   create: {
+     *     // ... data to create a WorkspaceMonthlyUsage
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkspaceMonthlyUsage we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkspaceMonthlyUsageUpsertArgs>(args: SelectSubset<T, WorkspaceMonthlyUsageUpsertArgs<ExtArgs>>): Prisma__WorkspaceMonthlyUsageClient<$Result.GetResult<Prisma.$WorkspaceMonthlyUsagePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of WorkspaceMonthlyUsages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkspaceMonthlyUsageCountArgs} args - Arguments to filter WorkspaceMonthlyUsages to count.
+     * @example
+     * // Count the number of WorkspaceMonthlyUsages
+     * const count = await prisma.workspaceMonthlyUsage.count({
+     *   where: {
+     *     // ... the filter for the WorkspaceMonthlyUsages we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkspaceMonthlyUsageCountArgs>(
+      args?: Subset<T, WorkspaceMonthlyUsageCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkspaceMonthlyUsageCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkspaceMonthlyUsage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkspaceMonthlyUsageAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkspaceMonthlyUsageAggregateArgs>(args: Subset<T, WorkspaceMonthlyUsageAggregateArgs>): Prisma.PrismaPromise<GetWorkspaceMonthlyUsageAggregateType<T>>
+
+    /**
+     * Group by WorkspaceMonthlyUsage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkspaceMonthlyUsageGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkspaceMonthlyUsageGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkspaceMonthlyUsageGroupByArgs['orderBy'] }
+        : { orderBy?: WorkspaceMonthlyUsageGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkspaceMonthlyUsageGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkspaceMonthlyUsageGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkspaceMonthlyUsage model
+   */
+  readonly fields: WorkspaceMonthlyUsageFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkspaceMonthlyUsage.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkspaceMonthlyUsageClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workspace<T extends WorkspaceDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkspaceDefaultArgs<ExtArgs>>): Prisma__WorkspaceClient<$Result.GetResult<Prisma.$WorkspacePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkspaceMonthlyUsage model
+   */ 
+  interface WorkspaceMonthlyUsageFieldRefs {
+    readonly id: FieldRef<"WorkspaceMonthlyUsage", 'String'>
+    readonly workspaceId: FieldRef<"WorkspaceMonthlyUsage", 'String'>
+    readonly monthStart: FieldRef<"WorkspaceMonthlyUsage", 'DateTime'>
+    readonly aiReplies: FieldRef<"WorkspaceMonthlyUsage", 'Int'>
+    readonly createdAt: FieldRef<"WorkspaceMonthlyUsage", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkspaceMonthlyUsage", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkspaceMonthlyUsage findUnique
+   */
+  export type WorkspaceMonthlyUsageFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkspaceMonthlyUsage to fetch.
+     */
+    where: WorkspaceMonthlyUsageWhereUniqueInput
+  }
+
+  /**
+   * WorkspaceMonthlyUsage findUniqueOrThrow
+   */
+  export type WorkspaceMonthlyUsageFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkspaceMonthlyUsage to fetch.
+     */
+    where: WorkspaceMonthlyUsageWhereUniqueInput
+  }
+
+  /**
+   * WorkspaceMonthlyUsage findFirst
+   */
+  export type WorkspaceMonthlyUsageFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkspaceMonthlyUsage to fetch.
+     */
+    where?: WorkspaceMonthlyUsageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkspaceMonthlyUsages to fetch.
+     */
+    orderBy?: WorkspaceMonthlyUsageOrderByWithRelationInput | WorkspaceMonthlyUsageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkspaceMonthlyUsages.
+     */
+    cursor?: WorkspaceMonthlyUsageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkspaceMonthlyUsages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkspaceMonthlyUsages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkspaceMonthlyUsages.
+     */
+    distinct?: WorkspaceMonthlyUsageScalarFieldEnum | WorkspaceMonthlyUsageScalarFieldEnum[]
+  }
+
+  /**
+   * WorkspaceMonthlyUsage findFirstOrThrow
+   */
+  export type WorkspaceMonthlyUsageFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkspaceMonthlyUsage to fetch.
+     */
+    where?: WorkspaceMonthlyUsageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkspaceMonthlyUsages to fetch.
+     */
+    orderBy?: WorkspaceMonthlyUsageOrderByWithRelationInput | WorkspaceMonthlyUsageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkspaceMonthlyUsages.
+     */
+    cursor?: WorkspaceMonthlyUsageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkspaceMonthlyUsages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkspaceMonthlyUsages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkspaceMonthlyUsages.
+     */
+    distinct?: WorkspaceMonthlyUsageScalarFieldEnum | WorkspaceMonthlyUsageScalarFieldEnum[]
+  }
+
+  /**
+   * WorkspaceMonthlyUsage findMany
+   */
+  export type WorkspaceMonthlyUsageFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkspaceMonthlyUsages to fetch.
+     */
+    where?: WorkspaceMonthlyUsageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkspaceMonthlyUsages to fetch.
+     */
+    orderBy?: WorkspaceMonthlyUsageOrderByWithRelationInput | WorkspaceMonthlyUsageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkspaceMonthlyUsages.
+     */
+    cursor?: WorkspaceMonthlyUsageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkspaceMonthlyUsages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkspaceMonthlyUsages.
+     */
+    skip?: number
+    distinct?: WorkspaceMonthlyUsageScalarFieldEnum | WorkspaceMonthlyUsageScalarFieldEnum[]
+  }
+
+  /**
+   * WorkspaceMonthlyUsage create
+   */
+  export type WorkspaceMonthlyUsageCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkspaceMonthlyUsage.
+     */
+    data: XOR<WorkspaceMonthlyUsageCreateInput, WorkspaceMonthlyUsageUncheckedCreateInput>
+  }
+
+  /**
+   * WorkspaceMonthlyUsage createMany
+   */
+  export type WorkspaceMonthlyUsageCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkspaceMonthlyUsages.
+     */
+    data: WorkspaceMonthlyUsageCreateManyInput | WorkspaceMonthlyUsageCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkspaceMonthlyUsage update
+   */
+  export type WorkspaceMonthlyUsageUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkspaceMonthlyUsage.
+     */
+    data: XOR<WorkspaceMonthlyUsageUpdateInput, WorkspaceMonthlyUsageUncheckedUpdateInput>
+    /**
+     * Choose, which WorkspaceMonthlyUsage to update.
+     */
+    where: WorkspaceMonthlyUsageWhereUniqueInput
+  }
+
+  /**
+   * WorkspaceMonthlyUsage updateMany
+   */
+  export type WorkspaceMonthlyUsageUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkspaceMonthlyUsages.
+     */
+    data: XOR<WorkspaceMonthlyUsageUpdateManyMutationInput, WorkspaceMonthlyUsageUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkspaceMonthlyUsages to update
+     */
+    where?: WorkspaceMonthlyUsageWhereInput
+  }
+
+  /**
+   * WorkspaceMonthlyUsage upsert
+   */
+  export type WorkspaceMonthlyUsageUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkspaceMonthlyUsage to update in case it exists.
+     */
+    where: WorkspaceMonthlyUsageWhereUniqueInput
+    /**
+     * In case the WorkspaceMonthlyUsage found by the `where` argument doesn't exist, create a new WorkspaceMonthlyUsage with this data.
+     */
+    create: XOR<WorkspaceMonthlyUsageCreateInput, WorkspaceMonthlyUsageUncheckedCreateInput>
+    /**
+     * In case the WorkspaceMonthlyUsage was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkspaceMonthlyUsageUpdateInput, WorkspaceMonthlyUsageUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkspaceMonthlyUsage delete
+   */
+  export type WorkspaceMonthlyUsageDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+    /**
+     * Filter which WorkspaceMonthlyUsage to delete.
+     */
+    where: WorkspaceMonthlyUsageWhereUniqueInput
+  }
+
+  /**
+   * WorkspaceMonthlyUsage deleteMany
+   */
+  export type WorkspaceMonthlyUsageDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkspaceMonthlyUsages to delete
+     */
+    where?: WorkspaceMonthlyUsageWhereInput
+  }
+
+  /**
+   * WorkspaceMonthlyUsage without action
+   */
+  export type WorkspaceMonthlyUsageDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkspaceMonthlyUsage
+     */
+    select?: WorkspaceMonthlyUsageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkspaceMonthlyUsageInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -7929,6 +9038,12 @@ export namespace Prisma {
     name: 'name',
     stripeCustomerId: 'stripeCustomerId',
     subscriptionTier: 'subscriptionTier',
+    subscriptionStatus: 'subscriptionStatus',
+    billingProvider: 'billingProvider',
+    subscriptionStartDate: 'subscriptionStartDate',
+    subscriptionExpiresAt: 'subscriptionExpiresAt',
+    subscriptionNotes: 'subscriptionNotes',
+    monthlyReplyLimit: 'monthlyReplyLimit',
     tokenBalance: 'tokenBalance',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -8000,6 +9115,18 @@ export namespace Prisma {
   };
 
   export type OutgoingWebhookScalarFieldEnum = (typeof OutgoingWebhookScalarFieldEnum)[keyof typeof OutgoingWebhookScalarFieldEnum]
+
+
+  export const WorkspaceMonthlyUsageScalarFieldEnum: {
+    id: 'id',
+    workspaceId: 'workspaceId',
+    monthStart: 'monthStart',
+    aiReplies: 'aiReplies',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkspaceMonthlyUsageScalarFieldEnum = (typeof WorkspaceMonthlyUsageScalarFieldEnum)[keyof typeof WorkspaceMonthlyUsageScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -8132,12 +9259,19 @@ export namespace Prisma {
     name?: StringFilter<"Workspace"> | string
     stripeCustomerId?: StringNullableFilter<"Workspace"> | string | null
     subscriptionTier?: StringNullableFilter<"Workspace"> | string | null
+    subscriptionStatus?: StringNullableFilter<"Workspace"> | string | null
+    billingProvider?: StringNullableFilter<"Workspace"> | string | null
+    subscriptionStartDate?: DateTimeNullableFilter<"Workspace"> | Date | string | null
+    subscriptionExpiresAt?: DateTimeNullableFilter<"Workspace"> | Date | string | null
+    subscriptionNotes?: StringNullableFilter<"Workspace"> | string | null
+    monthlyReplyLimit?: IntNullableFilter<"Workspace"> | number | null
     tokenBalance?: IntFilter<"Workspace"> | number
     createdAt?: DateTimeFilter<"Workspace"> | Date | string
     updatedAt?: DateTimeFilter<"Workspace"> | Date | string
     members?: WorkspaceMemberListRelationFilter
     agents?: AgentListRelationFilter
     documents?: DocumentListRelationFilter
+    monthlyUsage?: WorkspaceMonthlyUsageListRelationFilter
   }
 
   export type WorkspaceOrderByWithRelationInput = {
@@ -8145,12 +9279,19 @@ export namespace Prisma {
     name?: SortOrder
     stripeCustomerId?: SortOrderInput | SortOrder
     subscriptionTier?: SortOrderInput | SortOrder
+    subscriptionStatus?: SortOrderInput | SortOrder
+    billingProvider?: SortOrderInput | SortOrder
+    subscriptionStartDate?: SortOrderInput | SortOrder
+    subscriptionExpiresAt?: SortOrderInput | SortOrder
+    subscriptionNotes?: SortOrderInput | SortOrder
+    monthlyReplyLimit?: SortOrderInput | SortOrder
     tokenBalance?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     members?: WorkspaceMemberOrderByRelationAggregateInput
     agents?: AgentOrderByRelationAggregateInput
     documents?: DocumentOrderByRelationAggregateInput
+    monthlyUsage?: WorkspaceMonthlyUsageOrderByRelationAggregateInput
   }
 
   export type WorkspaceWhereUniqueInput = Prisma.AtLeast<{
@@ -8161,12 +9302,19 @@ export namespace Prisma {
     name?: StringFilter<"Workspace"> | string
     stripeCustomerId?: StringNullableFilter<"Workspace"> | string | null
     subscriptionTier?: StringNullableFilter<"Workspace"> | string | null
+    subscriptionStatus?: StringNullableFilter<"Workspace"> | string | null
+    billingProvider?: StringNullableFilter<"Workspace"> | string | null
+    subscriptionStartDate?: DateTimeNullableFilter<"Workspace"> | Date | string | null
+    subscriptionExpiresAt?: DateTimeNullableFilter<"Workspace"> | Date | string | null
+    subscriptionNotes?: StringNullableFilter<"Workspace"> | string | null
+    monthlyReplyLimit?: IntNullableFilter<"Workspace"> | number | null
     tokenBalance?: IntFilter<"Workspace"> | number
     createdAt?: DateTimeFilter<"Workspace"> | Date | string
     updatedAt?: DateTimeFilter<"Workspace"> | Date | string
     members?: WorkspaceMemberListRelationFilter
     agents?: AgentListRelationFilter
     documents?: DocumentListRelationFilter
+    monthlyUsage?: WorkspaceMonthlyUsageListRelationFilter
   }, "id">
 
   export type WorkspaceOrderByWithAggregationInput = {
@@ -8174,6 +9322,12 @@ export namespace Prisma {
     name?: SortOrder
     stripeCustomerId?: SortOrderInput | SortOrder
     subscriptionTier?: SortOrderInput | SortOrder
+    subscriptionStatus?: SortOrderInput | SortOrder
+    billingProvider?: SortOrderInput | SortOrder
+    subscriptionStartDate?: SortOrderInput | SortOrder
+    subscriptionExpiresAt?: SortOrderInput | SortOrder
+    subscriptionNotes?: SortOrderInput | SortOrder
+    monthlyReplyLimit?: SortOrderInput | SortOrder
     tokenBalance?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -8192,6 +9346,12 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"Workspace"> | string
     stripeCustomerId?: StringNullableWithAggregatesFilter<"Workspace"> | string | null
     subscriptionTier?: StringNullableWithAggregatesFilter<"Workspace"> | string | null
+    subscriptionStatus?: StringNullableWithAggregatesFilter<"Workspace"> | string | null
+    billingProvider?: StringNullableWithAggregatesFilter<"Workspace"> | string | null
+    subscriptionStartDate?: DateTimeNullableWithAggregatesFilter<"Workspace"> | Date | string | null
+    subscriptionExpiresAt?: DateTimeNullableWithAggregatesFilter<"Workspace"> | Date | string | null
+    subscriptionNotes?: StringNullableWithAggregatesFilter<"Workspace"> | string | null
+    monthlyReplyLimit?: IntNullableWithAggregatesFilter<"Workspace"> | number | null
     tokenBalance?: IntWithAggregatesFilter<"Workspace"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Workspace"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Workspace"> | Date | string
@@ -8529,6 +9689,69 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"OutgoingWebhook"> | Date | string
   }
 
+  export type WorkspaceMonthlyUsageWhereInput = {
+    AND?: WorkspaceMonthlyUsageWhereInput | WorkspaceMonthlyUsageWhereInput[]
+    OR?: WorkspaceMonthlyUsageWhereInput[]
+    NOT?: WorkspaceMonthlyUsageWhereInput | WorkspaceMonthlyUsageWhereInput[]
+    id?: StringFilter<"WorkspaceMonthlyUsage"> | string
+    workspaceId?: StringFilter<"WorkspaceMonthlyUsage"> | string
+    monthStart?: DateTimeFilter<"WorkspaceMonthlyUsage"> | Date | string
+    aiReplies?: IntFilter<"WorkspaceMonthlyUsage"> | number
+    createdAt?: DateTimeFilter<"WorkspaceMonthlyUsage"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkspaceMonthlyUsage"> | Date | string
+    workspace?: XOR<WorkspaceRelationFilter, WorkspaceWhereInput>
+  }
+
+  export type WorkspaceMonthlyUsageOrderByWithRelationInput = {
+    id?: SortOrder
+    workspaceId?: SortOrder
+    monthStart?: SortOrder
+    aiReplies?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workspace?: WorkspaceOrderByWithRelationInput
+  }
+
+  export type WorkspaceMonthlyUsageWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    workspaceId_monthStart?: WorkspaceMonthlyUsageWorkspaceIdMonthStartCompoundUniqueInput
+    AND?: WorkspaceMonthlyUsageWhereInput | WorkspaceMonthlyUsageWhereInput[]
+    OR?: WorkspaceMonthlyUsageWhereInput[]
+    NOT?: WorkspaceMonthlyUsageWhereInput | WorkspaceMonthlyUsageWhereInput[]
+    workspaceId?: StringFilter<"WorkspaceMonthlyUsage"> | string
+    monthStart?: DateTimeFilter<"WorkspaceMonthlyUsage"> | Date | string
+    aiReplies?: IntFilter<"WorkspaceMonthlyUsage"> | number
+    createdAt?: DateTimeFilter<"WorkspaceMonthlyUsage"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkspaceMonthlyUsage"> | Date | string
+    workspace?: XOR<WorkspaceRelationFilter, WorkspaceWhereInput>
+  }, "id" | "workspaceId_monthStart">
+
+  export type WorkspaceMonthlyUsageOrderByWithAggregationInput = {
+    id?: SortOrder
+    workspaceId?: SortOrder
+    monthStart?: SortOrder
+    aiReplies?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkspaceMonthlyUsageCountOrderByAggregateInput
+    _avg?: WorkspaceMonthlyUsageAvgOrderByAggregateInput
+    _max?: WorkspaceMonthlyUsageMaxOrderByAggregateInput
+    _min?: WorkspaceMonthlyUsageMinOrderByAggregateInput
+    _sum?: WorkspaceMonthlyUsageSumOrderByAggregateInput
+  }
+
+  export type WorkspaceMonthlyUsageScalarWhereWithAggregatesInput = {
+    AND?: WorkspaceMonthlyUsageScalarWhereWithAggregatesInput | WorkspaceMonthlyUsageScalarWhereWithAggregatesInput[]
+    OR?: WorkspaceMonthlyUsageScalarWhereWithAggregatesInput[]
+    NOT?: WorkspaceMonthlyUsageScalarWhereWithAggregatesInput | WorkspaceMonthlyUsageScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"WorkspaceMonthlyUsage"> | string
+    workspaceId?: StringWithAggregatesFilter<"WorkspaceMonthlyUsage"> | string
+    monthStart?: DateTimeWithAggregatesFilter<"WorkspaceMonthlyUsage"> | Date | string
+    aiReplies?: IntWithAggregatesFilter<"WorkspaceMonthlyUsage"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"WorkspaceMonthlyUsage"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkspaceMonthlyUsage"> | Date | string
+  }
+
   export type UserCreateInput = {
     id?: string
     name?: string | null
@@ -8605,12 +9828,19 @@ export namespace Prisma {
     name: string
     stripeCustomerId?: string | null
     subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
     tokenBalance?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
     agents?: AgentCreateNestedManyWithoutWorkspaceInput
     documents?: DocumentCreateNestedManyWithoutWorkspaceInput
+    monthlyUsage?: WorkspaceMonthlyUsageCreateNestedManyWithoutWorkspaceInput
   }
 
   export type WorkspaceUncheckedCreateInput = {
@@ -8618,12 +9848,19 @@ export namespace Prisma {
     name: string
     stripeCustomerId?: string | null
     subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
     tokenBalance?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
     agents?: AgentUncheckedCreateNestedManyWithoutWorkspaceInput
     documents?: DocumentUncheckedCreateNestedManyWithoutWorkspaceInput
+    monthlyUsage?: WorkspaceMonthlyUsageUncheckedCreateNestedManyWithoutWorkspaceInput
   }
 
   export type WorkspaceUpdateInput = {
@@ -8631,12 +9868,19 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
     agents?: AgentUpdateManyWithoutWorkspaceNestedInput
     documents?: DocumentUpdateManyWithoutWorkspaceNestedInput
+    monthlyUsage?: WorkspaceMonthlyUsageUpdateManyWithoutWorkspaceNestedInput
   }
 
   export type WorkspaceUncheckedUpdateInput = {
@@ -8644,12 +9888,19 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
     agents?: AgentUncheckedUpdateManyWithoutWorkspaceNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutWorkspaceNestedInput
+    monthlyUsage?: WorkspaceMonthlyUsageUncheckedUpdateManyWithoutWorkspaceNestedInput
   }
 
   export type WorkspaceCreateManyInput = {
@@ -8657,6 +9908,12 @@ export namespace Prisma {
     name: string
     stripeCustomerId?: string | null
     subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
     tokenBalance?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8667,6 +9924,12 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8677,6 +9940,12 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9030,6 +10299,68 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkspaceMonthlyUsageCreateInput = {
+    id?: string
+    monthStart: Date | string
+    aiReplies?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workspace: WorkspaceCreateNestedOneWithoutMonthlyUsageInput
+  }
+
+  export type WorkspaceMonthlyUsageUncheckedCreateInput = {
+    id?: string
+    workspaceId: string
+    monthStart: Date | string
+    aiReplies?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkspaceMonthlyUsageUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiReplies?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workspace?: WorkspaceUpdateOneRequiredWithoutMonthlyUsageNestedInput
+  }
+
+  export type WorkspaceMonthlyUsageUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workspaceId?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiReplies?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkspaceMonthlyUsageCreateManyInput = {
+    id?: string
+    workspaceId: string
+    monthStart: Date | string
+    aiReplies?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkspaceMonthlyUsageUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiReplies?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkspaceMonthlyUsageUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workspaceId?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiReplies?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -9169,6 +10500,28 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type IntFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[]
@@ -9192,6 +10545,12 @@ export namespace Prisma {
     none?: DocumentWhereInput
   }
 
+  export type WorkspaceMonthlyUsageListRelationFilter = {
+    every?: WorkspaceMonthlyUsageWhereInput
+    some?: WorkspaceMonthlyUsageWhereInput
+    none?: WorkspaceMonthlyUsageWhereInput
+  }
+
   export type AgentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -9200,17 +10559,28 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type WorkspaceMonthlyUsageOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type WorkspaceCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     stripeCustomerId?: SortOrder
     subscriptionTier?: SortOrder
+    subscriptionStatus?: SortOrder
+    billingProvider?: SortOrder
+    subscriptionStartDate?: SortOrder
+    subscriptionExpiresAt?: SortOrder
+    subscriptionNotes?: SortOrder
+    monthlyReplyLimit?: SortOrder
     tokenBalance?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type WorkspaceAvgOrderByAggregateInput = {
+    monthlyReplyLimit?: SortOrder
     tokenBalance?: SortOrder
   }
 
@@ -9219,6 +10589,12 @@ export namespace Prisma {
     name?: SortOrder
     stripeCustomerId?: SortOrder
     subscriptionTier?: SortOrder
+    subscriptionStatus?: SortOrder
+    billingProvider?: SortOrder
+    subscriptionStartDate?: SortOrder
+    subscriptionExpiresAt?: SortOrder
+    subscriptionNotes?: SortOrder
+    monthlyReplyLimit?: SortOrder
     tokenBalance?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -9229,13 +10605,50 @@ export namespace Prisma {
     name?: SortOrder
     stripeCustomerId?: SortOrder
     subscriptionTier?: SortOrder
+    subscriptionStatus?: SortOrder
+    billingProvider?: SortOrder
+    subscriptionStartDate?: SortOrder
+    subscriptionExpiresAt?: SortOrder
+    subscriptionNotes?: SortOrder
+    monthlyReplyLimit?: SortOrder
     tokenBalance?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type WorkspaceSumOrderByAggregateInput = {
+    monthlyReplyLimit?: SortOrder
     tokenBalance?: SortOrder
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -9437,6 +10850,46 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type WorkspaceMonthlyUsageWorkspaceIdMonthStartCompoundUniqueInput = {
+    workspaceId: string
+    monthStart: Date | string
+  }
+
+  export type WorkspaceMonthlyUsageCountOrderByAggregateInput = {
+    id?: SortOrder
+    workspaceId?: SortOrder
+    monthStart?: SortOrder
+    aiReplies?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkspaceMonthlyUsageAvgOrderByAggregateInput = {
+    aiReplies?: SortOrder
+  }
+
+  export type WorkspaceMonthlyUsageMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workspaceId?: SortOrder
+    monthStart?: SortOrder
+    aiReplies?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkspaceMonthlyUsageMinOrderByAggregateInput = {
+    id?: SortOrder
+    workspaceId?: SortOrder
+    monthStart?: SortOrder
+    aiReplies?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkspaceMonthlyUsageSumOrderByAggregateInput = {
+    aiReplies?: SortOrder
+  }
+
   export type WorkspaceMemberCreateNestedManyWithoutUserInput = {
     create?: XOR<WorkspaceMemberCreateWithoutUserInput, WorkspaceMemberUncheckedCreateWithoutUserInput> | WorkspaceMemberCreateWithoutUserInput[] | WorkspaceMemberUncheckedCreateWithoutUserInput[]
     connectOrCreate?: WorkspaceMemberCreateOrConnectWithoutUserInput | WorkspaceMemberCreateOrConnectWithoutUserInput[]
@@ -9554,6 +11007,13 @@ export namespace Prisma {
     connect?: DocumentWhereUniqueInput | DocumentWhereUniqueInput[]
   }
 
+  export type WorkspaceMonthlyUsageCreateNestedManyWithoutWorkspaceInput = {
+    create?: XOR<WorkspaceMonthlyUsageCreateWithoutWorkspaceInput, WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput> | WorkspaceMonthlyUsageCreateWithoutWorkspaceInput[] | WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput[]
+    connectOrCreate?: WorkspaceMonthlyUsageCreateOrConnectWithoutWorkspaceInput | WorkspaceMonthlyUsageCreateOrConnectWithoutWorkspaceInput[]
+    createMany?: WorkspaceMonthlyUsageCreateManyWorkspaceInputEnvelope
+    connect?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+  }
+
   export type WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput = {
     create?: XOR<WorkspaceMemberCreateWithoutWorkspaceInput, WorkspaceMemberUncheckedCreateWithoutWorkspaceInput> | WorkspaceMemberCreateWithoutWorkspaceInput[] | WorkspaceMemberUncheckedCreateWithoutWorkspaceInput[]
     connectOrCreate?: WorkspaceMemberCreateOrConnectWithoutWorkspaceInput | WorkspaceMemberCreateOrConnectWithoutWorkspaceInput[]
@@ -9573,6 +11033,25 @@ export namespace Prisma {
     connectOrCreate?: DocumentCreateOrConnectWithoutWorkspaceInput | DocumentCreateOrConnectWithoutWorkspaceInput[]
     createMany?: DocumentCreateManyWorkspaceInputEnvelope
     connect?: DocumentWhereUniqueInput | DocumentWhereUniqueInput[]
+  }
+
+  export type WorkspaceMonthlyUsageUncheckedCreateNestedManyWithoutWorkspaceInput = {
+    create?: XOR<WorkspaceMonthlyUsageCreateWithoutWorkspaceInput, WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput> | WorkspaceMonthlyUsageCreateWithoutWorkspaceInput[] | WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput[]
+    connectOrCreate?: WorkspaceMonthlyUsageCreateOrConnectWithoutWorkspaceInput | WorkspaceMonthlyUsageCreateOrConnectWithoutWorkspaceInput[]
+    createMany?: WorkspaceMonthlyUsageCreateManyWorkspaceInputEnvelope
+    connect?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -9625,6 +11104,20 @@ export namespace Prisma {
     deleteMany?: DocumentScalarWhereInput | DocumentScalarWhereInput[]
   }
 
+  export type WorkspaceMonthlyUsageUpdateManyWithoutWorkspaceNestedInput = {
+    create?: XOR<WorkspaceMonthlyUsageCreateWithoutWorkspaceInput, WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput> | WorkspaceMonthlyUsageCreateWithoutWorkspaceInput[] | WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput[]
+    connectOrCreate?: WorkspaceMonthlyUsageCreateOrConnectWithoutWorkspaceInput | WorkspaceMonthlyUsageCreateOrConnectWithoutWorkspaceInput[]
+    upsert?: WorkspaceMonthlyUsageUpsertWithWhereUniqueWithoutWorkspaceInput | WorkspaceMonthlyUsageUpsertWithWhereUniqueWithoutWorkspaceInput[]
+    createMany?: WorkspaceMonthlyUsageCreateManyWorkspaceInputEnvelope
+    set?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+    disconnect?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+    delete?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+    connect?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+    update?: WorkspaceMonthlyUsageUpdateWithWhereUniqueWithoutWorkspaceInput | WorkspaceMonthlyUsageUpdateWithWhereUniqueWithoutWorkspaceInput[]
+    updateMany?: WorkspaceMonthlyUsageUpdateManyWithWhereWithoutWorkspaceInput | WorkspaceMonthlyUsageUpdateManyWithWhereWithoutWorkspaceInput[]
+    deleteMany?: WorkspaceMonthlyUsageScalarWhereInput | WorkspaceMonthlyUsageScalarWhereInput[]
+  }
+
   export type WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput = {
     create?: XOR<WorkspaceMemberCreateWithoutWorkspaceInput, WorkspaceMemberUncheckedCreateWithoutWorkspaceInput> | WorkspaceMemberCreateWithoutWorkspaceInput[] | WorkspaceMemberUncheckedCreateWithoutWorkspaceInput[]
     connectOrCreate?: WorkspaceMemberCreateOrConnectWithoutWorkspaceInput | WorkspaceMemberCreateOrConnectWithoutWorkspaceInput[]
@@ -9665,6 +11158,20 @@ export namespace Prisma {
     update?: DocumentUpdateWithWhereUniqueWithoutWorkspaceInput | DocumentUpdateWithWhereUniqueWithoutWorkspaceInput[]
     updateMany?: DocumentUpdateManyWithWhereWithoutWorkspaceInput | DocumentUpdateManyWithWhereWithoutWorkspaceInput[]
     deleteMany?: DocumentScalarWhereInput | DocumentScalarWhereInput[]
+  }
+
+  export type WorkspaceMonthlyUsageUncheckedUpdateManyWithoutWorkspaceNestedInput = {
+    create?: XOR<WorkspaceMonthlyUsageCreateWithoutWorkspaceInput, WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput> | WorkspaceMonthlyUsageCreateWithoutWorkspaceInput[] | WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput[]
+    connectOrCreate?: WorkspaceMonthlyUsageCreateOrConnectWithoutWorkspaceInput | WorkspaceMonthlyUsageCreateOrConnectWithoutWorkspaceInput[]
+    upsert?: WorkspaceMonthlyUsageUpsertWithWhereUniqueWithoutWorkspaceInput | WorkspaceMonthlyUsageUpsertWithWhereUniqueWithoutWorkspaceInput[]
+    createMany?: WorkspaceMonthlyUsageCreateManyWorkspaceInputEnvelope
+    set?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+    disconnect?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+    delete?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+    connect?: WorkspaceMonthlyUsageWhereUniqueInput | WorkspaceMonthlyUsageWhereUniqueInput[]
+    update?: WorkspaceMonthlyUsageUpdateWithWhereUniqueWithoutWorkspaceInput | WorkspaceMonthlyUsageUpdateWithWhereUniqueWithoutWorkspaceInput[]
+    updateMany?: WorkspaceMonthlyUsageUpdateManyWithWhereWithoutWorkspaceInput | WorkspaceMonthlyUsageUpdateManyWithWhereWithoutWorkspaceInput[]
+    deleteMany?: WorkspaceMonthlyUsageScalarWhereInput | WorkspaceMonthlyUsageScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutWorkspacesInput = {
@@ -9799,6 +11306,20 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPasswordResetTokensInput, UserUpdateWithoutPasswordResetTokensInput>, UserUncheckedUpdateWithoutPasswordResetTokensInput>
   }
 
+  export type WorkspaceCreateNestedOneWithoutMonthlyUsageInput = {
+    create?: XOR<WorkspaceCreateWithoutMonthlyUsageInput, WorkspaceUncheckedCreateWithoutMonthlyUsageInput>
+    connectOrCreate?: WorkspaceCreateOrConnectWithoutMonthlyUsageInput
+    connect?: WorkspaceWhereUniqueInput
+  }
+
+  export type WorkspaceUpdateOneRequiredWithoutMonthlyUsageNestedInput = {
+    create?: XOR<WorkspaceCreateWithoutMonthlyUsageInput, WorkspaceUncheckedCreateWithoutMonthlyUsageInput>
+    connectOrCreate?: WorkspaceCreateOrConnectWithoutMonthlyUsageInput
+    upsert?: WorkspaceUpsertWithoutMonthlyUsageInput
+    connect?: WorkspaceWhereUniqueInput
+    update?: XOR<XOR<WorkspaceUpdateToOneWithWhereWithoutMonthlyUsageInput, WorkspaceUpdateWithoutMonthlyUsageInput>, WorkspaceUncheckedUpdateWithoutMonthlyUsageInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -9906,6 +11427,58 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -10143,6 +11716,32 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type WorkspaceMonthlyUsageCreateWithoutWorkspaceInput = {
+    id?: string
+    monthStart: Date | string
+    aiReplies?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput = {
+    id?: string
+    monthStart: Date | string
+    aiReplies?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkspaceMonthlyUsageCreateOrConnectWithoutWorkspaceInput = {
+    where: WorkspaceMonthlyUsageWhereUniqueInput
+    create: XOR<WorkspaceMonthlyUsageCreateWithoutWorkspaceInput, WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput>
+  }
+
+  export type WorkspaceMonthlyUsageCreateManyWorkspaceInputEnvelope = {
+    data: WorkspaceMonthlyUsageCreateManyWorkspaceInput | WorkspaceMonthlyUsageCreateManyWorkspaceInput[]
+    skipDuplicates?: boolean
+  }
+
   export type WorkspaceMemberUpsertWithWhereUniqueWithoutWorkspaceInput = {
     where: WorkspaceMemberWhereUniqueInput
     update: XOR<WorkspaceMemberUpdateWithoutWorkspaceInput, WorkspaceMemberUncheckedUpdateWithoutWorkspaceInput>
@@ -10221,6 +11820,34 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Document"> | Date | string
   }
 
+  export type WorkspaceMonthlyUsageUpsertWithWhereUniqueWithoutWorkspaceInput = {
+    where: WorkspaceMonthlyUsageWhereUniqueInput
+    update: XOR<WorkspaceMonthlyUsageUpdateWithoutWorkspaceInput, WorkspaceMonthlyUsageUncheckedUpdateWithoutWorkspaceInput>
+    create: XOR<WorkspaceMonthlyUsageCreateWithoutWorkspaceInput, WorkspaceMonthlyUsageUncheckedCreateWithoutWorkspaceInput>
+  }
+
+  export type WorkspaceMonthlyUsageUpdateWithWhereUniqueWithoutWorkspaceInput = {
+    where: WorkspaceMonthlyUsageWhereUniqueInput
+    data: XOR<WorkspaceMonthlyUsageUpdateWithoutWorkspaceInput, WorkspaceMonthlyUsageUncheckedUpdateWithoutWorkspaceInput>
+  }
+
+  export type WorkspaceMonthlyUsageUpdateManyWithWhereWithoutWorkspaceInput = {
+    where: WorkspaceMonthlyUsageScalarWhereInput
+    data: XOR<WorkspaceMonthlyUsageUpdateManyMutationInput, WorkspaceMonthlyUsageUncheckedUpdateManyWithoutWorkspaceInput>
+  }
+
+  export type WorkspaceMonthlyUsageScalarWhereInput = {
+    AND?: WorkspaceMonthlyUsageScalarWhereInput | WorkspaceMonthlyUsageScalarWhereInput[]
+    OR?: WorkspaceMonthlyUsageScalarWhereInput[]
+    NOT?: WorkspaceMonthlyUsageScalarWhereInput | WorkspaceMonthlyUsageScalarWhereInput[]
+    id?: StringFilter<"WorkspaceMonthlyUsage"> | string
+    workspaceId?: StringFilter<"WorkspaceMonthlyUsage"> | string
+    monthStart?: DateTimeFilter<"WorkspaceMonthlyUsage"> | Date | string
+    aiReplies?: IntFilter<"WorkspaceMonthlyUsage"> | number
+    createdAt?: DateTimeFilter<"WorkspaceMonthlyUsage"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkspaceMonthlyUsage"> | Date | string
+  }
+
   export type UserCreateWithoutWorkspacesInput = {
     id?: string
     name?: string | null
@@ -10251,11 +11878,18 @@ export namespace Prisma {
     name: string
     stripeCustomerId?: string | null
     subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
     tokenBalance?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     agents?: AgentCreateNestedManyWithoutWorkspaceInput
     documents?: DocumentCreateNestedManyWithoutWorkspaceInput
+    monthlyUsage?: WorkspaceMonthlyUsageCreateNestedManyWithoutWorkspaceInput
   }
 
   export type WorkspaceUncheckedCreateWithoutMembersInput = {
@@ -10263,11 +11897,18 @@ export namespace Prisma {
     name: string
     stripeCustomerId?: string | null
     subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
     tokenBalance?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     agents?: AgentUncheckedCreateNestedManyWithoutWorkspaceInput
     documents?: DocumentUncheckedCreateNestedManyWithoutWorkspaceInput
+    monthlyUsage?: WorkspaceMonthlyUsageUncheckedCreateNestedManyWithoutWorkspaceInput
   }
 
   export type WorkspaceCreateOrConnectWithoutMembersInput = {
@@ -10322,11 +11963,18 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agents?: AgentUpdateManyWithoutWorkspaceNestedInput
     documents?: DocumentUpdateManyWithoutWorkspaceNestedInput
+    monthlyUsage?: WorkspaceMonthlyUsageUpdateManyWithoutWorkspaceNestedInput
   }
 
   export type WorkspaceUncheckedUpdateWithoutMembersInput = {
@@ -10334,11 +11982,18 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     agents?: AgentUncheckedUpdateManyWithoutWorkspaceNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutWorkspaceNestedInput
+    monthlyUsage?: WorkspaceMonthlyUsageUncheckedUpdateManyWithoutWorkspaceNestedInput
   }
 
   export type WorkspaceCreateWithoutAgentsInput = {
@@ -10346,11 +12001,18 @@ export namespace Prisma {
     name: string
     stripeCustomerId?: string | null
     subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
     tokenBalance?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
     documents?: DocumentCreateNestedManyWithoutWorkspaceInput
+    monthlyUsage?: WorkspaceMonthlyUsageCreateNestedManyWithoutWorkspaceInput
   }
 
   export type WorkspaceUncheckedCreateWithoutAgentsInput = {
@@ -10358,11 +12020,18 @@ export namespace Prisma {
     name: string
     stripeCustomerId?: string | null
     subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
     tokenBalance?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
     documents?: DocumentUncheckedCreateNestedManyWithoutWorkspaceInput
+    monthlyUsage?: WorkspaceMonthlyUsageUncheckedCreateNestedManyWithoutWorkspaceInput
   }
 
   export type WorkspaceCreateOrConnectWithoutAgentsInput = {
@@ -10418,11 +12087,18 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
     documents?: DocumentUpdateManyWithoutWorkspaceNestedInput
+    monthlyUsage?: WorkspaceMonthlyUsageUpdateManyWithoutWorkspaceNestedInput
   }
 
   export type WorkspaceUncheckedUpdateWithoutAgentsInput = {
@@ -10430,11 +12106,18 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
     documents?: DocumentUncheckedUpdateManyWithoutWorkspaceNestedInput
+    monthlyUsage?: WorkspaceMonthlyUsageUncheckedUpdateManyWithoutWorkspaceNestedInput
   }
 
   export type DocumentUpsertWithWhereUniqueWithoutAgentInput = {
@@ -10458,11 +12141,18 @@ export namespace Prisma {
     name: string
     stripeCustomerId?: string | null
     subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
     tokenBalance?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
     agents?: AgentCreateNestedManyWithoutWorkspaceInput
+    monthlyUsage?: WorkspaceMonthlyUsageCreateNestedManyWithoutWorkspaceInput
   }
 
   export type WorkspaceUncheckedCreateWithoutDocumentsInput = {
@@ -10470,11 +12160,18 @@ export namespace Prisma {
     name: string
     stripeCustomerId?: string | null
     subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
     tokenBalance?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     members?: WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
     agents?: AgentUncheckedCreateNestedManyWithoutWorkspaceInput
+    monthlyUsage?: WorkspaceMonthlyUsageUncheckedCreateNestedManyWithoutWorkspaceInput
   }
 
   export type WorkspaceCreateOrConnectWithoutDocumentsInput = {
@@ -10527,11 +12224,18 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
     agents?: AgentUpdateManyWithoutWorkspaceNestedInput
+    monthlyUsage?: WorkspaceMonthlyUsageUpdateManyWithoutWorkspaceNestedInput
   }
 
   export type WorkspaceUncheckedUpdateWithoutDocumentsInput = {
@@ -10539,11 +12243,18 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
     tokenBalance?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     members?: WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
     agents?: AgentUncheckedUpdateManyWithoutWorkspaceNestedInput
+    monthlyUsage?: WorkspaceMonthlyUsageUncheckedUpdateManyWithoutWorkspaceNestedInput
   }
 
   export type AgentUpsertWithoutDocumentsInput = {
@@ -10637,6 +12348,98 @@ export namespace Prisma {
     workspaces?: WorkspaceMemberUncheckedUpdateManyWithoutUserNestedInput
   }
 
+  export type WorkspaceCreateWithoutMonthlyUsageInput = {
+    id?: string
+    name: string
+    stripeCustomerId?: string | null
+    subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
+    tokenBalance?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    members?: WorkspaceMemberCreateNestedManyWithoutWorkspaceInput
+    agents?: AgentCreateNestedManyWithoutWorkspaceInput
+    documents?: DocumentCreateNestedManyWithoutWorkspaceInput
+  }
+
+  export type WorkspaceUncheckedCreateWithoutMonthlyUsageInput = {
+    id?: string
+    name: string
+    stripeCustomerId?: string | null
+    subscriptionTier?: string | null
+    subscriptionStatus?: string | null
+    billingProvider?: string | null
+    subscriptionStartDate?: Date | string | null
+    subscriptionExpiresAt?: Date | string | null
+    subscriptionNotes?: string | null
+    monthlyReplyLimit?: number | null
+    tokenBalance?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    members?: WorkspaceMemberUncheckedCreateNestedManyWithoutWorkspaceInput
+    agents?: AgentUncheckedCreateNestedManyWithoutWorkspaceInput
+    documents?: DocumentUncheckedCreateNestedManyWithoutWorkspaceInput
+  }
+
+  export type WorkspaceCreateOrConnectWithoutMonthlyUsageInput = {
+    where: WorkspaceWhereUniqueInput
+    create: XOR<WorkspaceCreateWithoutMonthlyUsageInput, WorkspaceUncheckedCreateWithoutMonthlyUsageInput>
+  }
+
+  export type WorkspaceUpsertWithoutMonthlyUsageInput = {
+    update: XOR<WorkspaceUpdateWithoutMonthlyUsageInput, WorkspaceUncheckedUpdateWithoutMonthlyUsageInput>
+    create: XOR<WorkspaceCreateWithoutMonthlyUsageInput, WorkspaceUncheckedCreateWithoutMonthlyUsageInput>
+    where?: WorkspaceWhereInput
+  }
+
+  export type WorkspaceUpdateToOneWithWhereWithoutMonthlyUsageInput = {
+    where?: WorkspaceWhereInput
+    data: XOR<WorkspaceUpdateWithoutMonthlyUsageInput, WorkspaceUncheckedUpdateWithoutMonthlyUsageInput>
+  }
+
+  export type WorkspaceUpdateWithoutMonthlyUsageInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    tokenBalance?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    members?: WorkspaceMemberUpdateManyWithoutWorkspaceNestedInput
+    agents?: AgentUpdateManyWithoutWorkspaceNestedInput
+    documents?: DocumentUpdateManyWithoutWorkspaceNestedInput
+  }
+
+  export type WorkspaceUncheckedUpdateWithoutMonthlyUsageInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    billingProvider?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionStartDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    monthlyReplyLimit?: NullableIntFieldUpdateOperationsInput | number | null
+    tokenBalance?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    members?: WorkspaceMemberUncheckedUpdateManyWithoutWorkspaceNestedInput
+    agents?: AgentUncheckedUpdateManyWithoutWorkspaceNestedInput
+    documents?: DocumentUncheckedUpdateManyWithoutWorkspaceNestedInput
+  }
+
   export type WorkspaceMemberCreateManyUserInput = {
     id?: string
     workspaceId: string
@@ -10722,6 +12525,14 @@ export namespace Prisma {
     fileUrl: string
     mimeType?: string | null
     status?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkspaceMonthlyUsageCreateManyWorkspaceInput = {
+    id?: string
+    monthStart: Date | string
+    aiReplies?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -10815,6 +12626,30 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkspaceMonthlyUsageUpdateWithoutWorkspaceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiReplies?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkspaceMonthlyUsageUncheckedUpdateWithoutWorkspaceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiReplies?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkspaceMonthlyUsageUncheckedUpdateManyWithoutWorkspaceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    aiReplies?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type DocumentCreateManyAgentInput = {
     id?: string
     workspaceId: string
@@ -10904,6 +12739,10 @@ export namespace Prisma {
      * @deprecated Use OutgoingWebhookDefaultArgs instead
      */
     export type OutgoingWebhookArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OutgoingWebhookDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use WorkspaceMonthlyUsageDefaultArgs instead
+     */
+    export type WorkspaceMonthlyUsageArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = WorkspaceMonthlyUsageDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

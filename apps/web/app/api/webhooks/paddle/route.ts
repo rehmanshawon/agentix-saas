@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
     if (!workspaceId) {
       console.warn("[Paddle] Webhook missing workspaceId custom_data");
-      return NextResponse.json({ received: true });
+      return NextResponse.json({ error: "Missing workspaceId" }, { status: 400 });
     }
 
     switch (event.event_type) {
@@ -80,13 +80,16 @@ export async function POST(req: Request) {
       case "subscription.updated": {
         if (!selectedPlan) {
           console.warn(`[Paddle] Unknown price ID: ${priceId}`);
-          return NextResponse.json({ received: true });
+          throw new Error(`Unknown Paddle price ID: ${priceId}`);
         }
 
         await prisma.workspace.update({
           where: { id: workspaceId },
           data: {
             subscriptionTier: selectedPlan.id,
+            subscriptionStatus: "active",
+            billingProvider: "paddle",
+            monthlyReplyLimit: null,
             tokenBalance: selectedPlan.limits.maxMessagesPerMonth,
           },
         });
@@ -103,6 +106,11 @@ export async function POST(req: Request) {
           where: { id: workspaceId },
           data: {
             subscriptionTier: null,
+            subscriptionStatus:
+              event.event_type === "subscription.past_due"
+                ? "past_due"
+                : "canceled",
+            billingProvider: "paddle",
             tokenBalance: 0,
           },
         });
@@ -117,6 +125,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true });
   } catch (error: any) {
     console.error(`[Paddle] Webhook handler failed: ${error.message}`);
-    return NextResponse.json({ received: true });
+    return NextResponse.json(
+      { error: "Webhook processing failed" },
+      { status: 500 },
+    );
   }
 }

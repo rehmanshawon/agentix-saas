@@ -51,19 +51,29 @@ const cards = [
 export default function DashboardPage() {
   const { data: session } = useSession();
   const email = session?.user?.email as string | undefined;
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const API_URL = "/api/backend";
 
   const [hasDocuments, setHasDocuments] = useState(false);
   const [hasAgent, setHasAgent] = useState(false);
   const [showWizard, setShowWizard] = useState(true);
+  const [replyUsage, setReplyUsage] = useState<{
+    used: number;
+    limit: number;
+    remaining: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!email) return;
     const fetchStatus = async () => {
       try {
-        const [docRes, agentRes] = await Promise.all([
-          fetch(`${API_URL}/knowledge?email=${email}`),
-          fetch(`${API_URL}/api/chat/config?email=${email}`),
+        const [docRes, agentRes, workspaceRes] = await Promise.all([
+          fetch(`${API_URL}/knowledge?email=${encodeURIComponent(email)}`),
+          fetch(
+            `${API_URL}/api/chat/config?email=${encodeURIComponent(email)}`,
+          ),
+          fetch(
+            `${API_URL}/api/workspace?email=${encodeURIComponent(email)}`,
+          ),
         ]);
         if (docRes.ok) {
           const docs = await docRes.json();
@@ -72,6 +82,16 @@ export default function DashboardPage() {
         if (agentRes.ok) {
           const { agent } = await agentRes.json();
           setHasAgent(!!agent);
+        }
+        if (workspaceRes.ok) {
+          const { workspace } = await workspaceRes.json();
+          if (workspace) {
+            setReplyUsage({
+              used: workspace.usage.aiRepliesUsed,
+              limit: workspace.usage.aiRepliesLimit,
+              remaining: workspace.usage.aiRepliesRemaining,
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to fetch dashboard status:", error);
@@ -107,7 +127,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
           <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
             <p className="text-xs font-medium text-gray-500 uppercase">
               Documents
@@ -131,6 +151,21 @@ export default function DashboardPage() {
             <p className="text-2xl font-bold text-gray-900 mt-1">
               {hasAgent && hasDocuments ? "✓ Ready" : "Incomplete"}
             </p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <p className="text-xs font-medium text-gray-500 uppercase">
+              AI Replies This Month
+            </p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">
+              {replyUsage
+                ? `${replyUsage.used.toLocaleString()} / ${replyUsage.limit.toLocaleString()}`
+                : "—"}
+            </p>
+            {replyUsage && (
+              <p className="mt-1 text-xs text-gray-500">
+                {replyUsage.remaining.toLocaleString()} remaining
+              </p>
+            )}
           </div>
         </div>
         {!showWizard && !hasDocuments && !hasAgent && (

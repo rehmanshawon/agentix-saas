@@ -79,6 +79,26 @@ export class ChatController {
       workspaceId = newWorkspace.id;
     }
 
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { id: workspaceId },
+    });
+    if (!workspace) {
+      throw new HttpException("Workspace not found", HttpStatus.NOT_FOUND);
+    }
+
+    const subscriptionExpired =
+      workspace.subscriptionExpiresAt !== null &&
+      workspace.subscriptionExpiresAt <= new Date();
+    const subscriptionInactive =
+      workspace.subscriptionStatus !== null &&
+      !["active", "manual"].includes(workspace.subscriptionStatus);
+    if (subscriptionExpired || subscriptionInactive) {
+      throw new HttpException(
+        "This workspace subscription is inactive or expired.",
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     const existingAgent = await this.prisma.agent.findFirst({
       where: { workspaceId },
     });
@@ -91,10 +111,6 @@ export class ChatController {
       });
     } else {
       // Enforce agent limit
-      const workspace = await this.prisma.workspace.findUnique({
-        where: { id: workspaceId },
-      });
-
       const currentAgentCount = await this.prisma.agent.count({
         where: { workspaceId },
       });
@@ -141,17 +157,21 @@ export class ChatController {
   async handleIncomingMessage(@Body() body: ChatRequestDto) {
     const { agentId, message } = body;
 
-    if (!agentId || !message) {
+    if (
+      typeof agentId !== "string" ||
+      !agentId ||
+      typeof message !== "string" ||
+      !message.trim() ||
+      message.length > 4000
+    ) {
       throw new HttpException(
-        "Missing agentId or message",
+        "A valid agentId and message of at most 4,000 characters are required.",
         HttpStatus.BAD_REQUEST,
       );
     }
 
     try {
-      this.logger.log(
-        `Received message for Agent ${agentId}: "${message.substring(0, 50)}..."`,
-      );
+      this.logger.log(`Received message for Agent ${agentId}.`);
 
       const agent = await this.prisma.agent.findUnique({
         where: { id: agentId },
@@ -165,16 +185,57 @@ export class ChatController {
         );
       }
 
-      // Check if workspace has an active subscription
-      if (!agent.workspace.subscriptionTier) {
+      const subscriptionExpired =
+        agent.workspace.subscriptionExpiresAt !== null &&
+        agent.workspace.subscriptionExpiresAt <= new Date();
+      const subscriptionInactive =
+        agent.workspace.subscriptionStatus !== null &&
+        !["active", "manual"].includes(agent.workspace.subscriptionStatus);
+
+      // Check if workspace has an active subscription.
+      if (
+        !agent.workspace.subscriptionTier ||
+        subscriptionExpired ||
+        subscriptionInactive
+      ) {
         return {
           reply:
             "This AI agent requires an active subscription. Please contact the site owner to upgrade their plan.",
         };
       }
 
-      // Token balance check
-      if (agent.workspace.tokenBalance <= 0) {
+      const now = new Date();
+      const monthStart = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+      );
+      const monthlyUsage =
+        await this.prisma.client.workspaceMonthlyUsage.findUnique({
+          where: {
+            workspaceId_monthStart: {
+              workspaceId: agent.workspaceId,
+              monthStart,
+            },
+          },
+        });
+      const monthlyReplyLimit =
+        agent.workspace.monthlyReplyLimit ??
+        getTierLimits(agent.workspace.subscriptionTier).maxMessagesPerMonth;
+
+      if (!monthlyUsage) {
+        await this.prisma.client.workspace.update({
+          where: { id: agent.workspaceId },
+          data: { tokenBalance: monthlyReplyLimit },
+        });
+      }
+
+      const currentReplyBalance = monthlyUsage
+        ? agent.workspace.tokenBalance
+        : monthlyReplyLimit;
+
+      if (
+        currentReplyBalance <= 0 ||
+        (monthlyUsage?.aiReplies ?? 0) >= monthlyReplyLimit
+      ) {
         return {
           reply:
             "This AI agent has reached its monthly AI reply limit. Please contact the site owner to upgrade their plan.",
@@ -188,14 +249,49 @@ export class ChatController {
         message,
       );
 
-      // Deduct token
-      await this.prisma.workspace.update({
-        where: { id: agent.workspaceId },
-        data: {
-          tokenBalance: {
-            decrement: 1,
+      await this.prisma.client.$transaction(async (transaction) => {
+        await transaction.workspaceMonthlyUsage.upsert({
+          where: {
+            workspaceId_monthStart: {
+              workspaceId: agent.workspaceId,
+              monthStart,
+            },
           },
-        },
+          create: {
+            workspaceId: agent.workspaceId,
+            monthStart,
+            aiReplies: 0,
+          },
+          update: {},
+        });
+
+        const usageUpdate = await transaction.workspaceMonthlyUsage.updateMany({
+          where: {
+            workspaceId: agent.workspaceId,
+            monthStart,
+            aiReplies: { lt: monthlyReplyLimit },
+          },
+          data: { aiReplies: { increment: 1 } },
+        });
+
+        if (usageUpdate.count !== 1) {
+          throw new HttpException(
+            "This AI agent has reached its monthly AI reply limit.",
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        }
+
+        const updatedWorkspace = await transaction.workspace.updateMany({
+          where: { id: agent.workspaceId, tokenBalance: { gt: 0 } },
+          data: { tokenBalance: { decrement: 1 } },
+        });
+
+        if (updatedWorkspace.count !== 1) {
+          throw new HttpException(
+            "This AI agent has reached its monthly AI reply limit.",
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        }
       });
 
       return { reply: aiResponse };

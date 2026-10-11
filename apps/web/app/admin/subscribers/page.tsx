@@ -7,6 +7,9 @@ interface Subscriber {
   name: string;
   subscriptionTier: string | null;
   tokenBalance: number;
+  aiRepliesUsed?: number;
+  aiRepliesLimit?: number;
+  aiRepliesRemaining?: number;
   createdAt: string;
   members: Array<{
     user: { email: string; name: string | null };
@@ -16,6 +19,12 @@ interface Subscriber {
     documents: number;
   };
   stripeCustomerId?: string | null;
+  subscriptionStatus?: string | null;
+  billingProvider?: string | null;
+  subscriptionStartDate?: string | null;
+  subscriptionExpiresAt?: string | null;
+  subscriptionNotes?: string | null;
+  monthlyReplyLimit?: number | null;
 }
 
 export default function SubscribersPage() {
@@ -31,20 +40,22 @@ export default function SubscribersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTier, setEditTier] = useState("");
   const [editTokens, setEditTokens] = useState(0);
+  const [editStatus, setEditStatus] = useState("manual");
+  const [editProvider, setEditProvider] = useState("manual");
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editExpiresAt, setEditExpiresAt] = useState("");
+  const [editReplyLimit, setEditReplyLimit] = useState(0);
+  const [editNotes, setEditNotes] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedData, setExpandedData] = useState<any>(null);
   const [isExpanding, setIsExpanding] = useState(false);
 
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://api.ilogicmagic.com";
+  const API_URL = "/api/backend";
 
   const fetchSubscribers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/workspaces`, {
-        headers: { "x-admin-key": ADMIN_PASSWORD },
-      });
+      const res = await fetch(`${API_URL}/api/admin/workspaces`);
       if (res.ok) {
         const data = await res.json();
         setSubscribers(data.workspaces);
@@ -55,7 +66,7 @@ export default function SubscribersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [API_URL, ADMIN_PASSWORD]);
+  }, [API_URL]);
 
   useEffect(() => {
     fetchSubscribers();
@@ -97,9 +108,9 @@ export default function SubscribersPage() {
           aVal = a.subscriptionTier || "";
           bVal = b.subscriptionTier || "";
           break;
-        case "tokens":
-          aVal = a.tokenBalance;
-          bVal = b.tokenBalance;
+        case "repliesUsed":
+          aVal = a.aiRepliesUsed ?? 0;
+          bVal = b.aiRepliesUsed ?? 0;
           break;
         case "createdAt":
         default:
@@ -127,13 +138,16 @@ export default function SubscribersPage() {
     try {
       const res = await fetch(`${API_URL}/api/admin/workspaces/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": ADMIN_PASSWORD,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subscriptionTier: editTier === "none" ? null : editTier,
           tokenBalance: editTokens,
+          subscriptionStatus: editStatus || null,
+          billingProvider: editProvider || null,
+          subscriptionStartDate: editStartDate || null,
+          subscriptionExpiresAt: editExpiresAt || null,
+          monthlyReplyLimit: editReplyLimit || null,
+          subscriptionNotes: editNotes || null,
         }),
       });
       if (res.ok) {
@@ -154,9 +168,7 @@ export default function SubscribersPage() {
     setIsExpanding(true);
     setExpandedId(id);
     try {
-      const res = await fetch(`${API_URL}/api/admin/subscribers/${id}`, {
-        headers: { "x-admin-key": ADMIN_PASSWORD },
-      });
+      const res = await fetch(`${API_URL}/api/admin/subscribers/${id}`);
       if (res.ok) {
         const data = await res.json();
         setExpandedData(data);
@@ -169,12 +181,20 @@ export default function SubscribersPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ["Workspace", "Owner Email", "Tier", "Tokens", "Created"];
+    const headers = [
+      "Workspace",
+      "Owner Email",
+      "Tier",
+      "AI Replies Used",
+      "Monthly AI Reply Limit",
+      "Created",
+    ];
     const rows = filteredSubscribers.map((s) => [
       s.name,
       s.members[0]?.user.email || "",
       s.subscriptionTier || "No Plan",
-      s.tokenBalance.toString(),
+      (s.aiRepliesUsed ?? 0).toString(),
+      (s.aiRepliesLimit ?? 0).toString(),
       new Date(s.createdAt).toLocaleDateString(),
     ]);
     const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
@@ -206,7 +226,16 @@ export default function SubscribersPage() {
       GROWTH: { color: "bg-indigo-900/50 text-indigo-400", label: "Growth" },
       ENTERPRISE: {
         color: "bg-purple-900/50 text-purple-400",
-      label: "Business",
+        label: "Business",
+      },
+      BD_BASIC: { color: "bg-amber-900/50 text-amber-400", label: "BD Basic" },
+      BD_STANDARD: {
+        color: "bg-amber-900/50 text-amber-400",
+        label: "BD Standard",
+      },
+      BD_INSTITUTIONAL: {
+        color: "bg-amber-900/50 text-amber-400",
+        label: "BD Institutional",
       },
     };
     return styles[tier] || { color: "bg-gray-800 text-gray-400", label: tier };
@@ -264,6 +293,9 @@ export default function SubscribersPage() {
           <option value="STARTER">Starter</option>
           <option value="GROWTH">Growth</option>
           <option value="ENTERPRISE">Business</option>
+          <option value="BD_BASIC">BD Basic</option>
+          <option value="BD_STANDARD">BD Standard</option>
+          <option value="BD_INSTITUTIONAL">BD Institutional</option>
         </select>
       </div>
 
@@ -296,9 +328,9 @@ export default function SubscribersPage() {
                   </th>
                   <th
                     className="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase cursor-pointer hover:text-white"
-                    onClick={() => handleSort("tokens")}
+                    onClick={() => handleSort("repliesUsed")}
                   >
-                    AI Replies <SortIcon field="tokens" />
+                    AI Replies Used / Limit <SortIcon field="repliesUsed" />
                   </th>
                   <th
                     className="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase cursor-pointer hover:text-white"
@@ -353,16 +385,76 @@ export default function SubscribersPage() {
                       </td>
                       <td className="px-6 py-4">
                         {editingId === sub.id ? (
-                          <select
-                            value={editTier}
-                            onChange={(e) => setEditTier(e.target.value)}
-                            className="px-2 py-1 bg-gray-800 border border-gray-700 text-white text-sm rounded"
-                          >
-                            <option value="none">No Plan</option>
-                            <option value="STARTER">Starter</option>
-                            <option value="GROWTH">Growth</option>
-                            <option value="ENTERPRISE">Business</option>
-                          </select>
+                          <div className="space-y-2">
+                            <select
+                              value={editTier}
+                              onChange={(e) => setEditTier(e.target.value)}
+                              className="px-2 py-1 bg-gray-800 border border-gray-700 text-white text-sm rounded"
+                            >
+                              <option value="none">No Plan</option>
+                              <option value="STARTER">Starter</option>
+                              <option value="GROWTH">Growth</option>
+                              <option value="ENTERPRISE">Business</option>
+                              <option value="BD_BASIC">BD Basic</option>
+                              <option value="BD_STANDARD">BD Standard</option>
+                              <option value="BD_INSTITUTIONAL">
+                                BD Institutional
+                              </option>
+                            </select>
+                            <select
+                              value={editStatus}
+                              onChange={(e) => setEditStatus(e.target.value)}
+                              className="w-full px-2 py-1 bg-gray-800 border border-gray-700 text-white text-xs rounded"
+                            >
+                              <option value="manual">Manual active</option>
+                              <option value="active">Active</option>
+                              <option value="past_due">Past due</option>
+                              <option value="canceled">Canceled</option>
+                              <option value="expired">Expired</option>
+                            </select>
+                            <select
+                              value={editProvider}
+                              onChange={(e) => setEditProvider(e.target.value)}
+                              className="w-full px-2 py-1 bg-gray-800 border border-gray-700 text-white text-xs rounded"
+                            >
+                              <option value="manual">Manual</option>
+                              <option value="stripe">Stripe</option>
+                              <option value="paddle">Paddle</option>
+                            </select>
+                            <input
+                              type="date"
+                              value={editStartDate}
+                              onChange={(e) => setEditStartDate(e.target.value)}
+                              className="w-full px-2 py-1 bg-gray-800 border border-gray-700 text-white text-xs rounded"
+                              aria-label="Subscription start date"
+                            />
+                            <input
+                              type="date"
+                              value={editExpiresAt}
+                              onChange={(e) => setEditExpiresAt(e.target.value)}
+                              className="w-full px-2 py-1 bg-gray-800 border border-gray-700 text-white text-xs rounded"
+                              aria-label="Subscription expiry date"
+                            />
+                            <input
+                              type="number"
+                              min="0"
+                              value={editReplyLimit}
+                              onChange={(e) =>
+                                setEditReplyLimit(Number(e.target.value))
+                              }
+                              className="w-full px-2 py-1 bg-gray-800 border border-gray-700 text-white text-xs rounded"
+                              placeholder="Monthly reply override"
+                              aria-label="Monthly reply limit"
+                            />
+                            <textarea
+                              value={editNotes}
+                              onChange={(e) => setEditNotes(e.target.value)}
+                              className="w-full px-2 py-1 bg-gray-800 border border-gray-700 text-white text-xs rounded"
+                              placeholder="Agreement or payment notes"
+                              aria-label="Subscription notes"
+                              rows={2}
+                            />
+                          </div>
                         ) : (
                           <span
                             className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${tier.color}`}
@@ -373,18 +465,29 @@ export default function SubscribersPage() {
                       </td>
                       <td className="px-6 py-4">
                         {editingId === sub.id ? (
-                          <input
-                            type="number"
-                            value={editTokens}
-                            onChange={(e) =>
-                              setEditTokens(Number(e.target.value))
-                            }
-                            className="w-24 px-2 py-1 bg-gray-800 border border-gray-700 text-white text-sm rounded"
-                          />
+                          <label className="block text-xs text-gray-400">
+                            Current reply balance override
+                            <input
+                              type="number"
+                              min="0"
+                              value={editTokens}
+                              onChange={(e) =>
+                                setEditTokens(Number(e.target.value))
+                              }
+                              className="mt-1 w-32 px-2 py-1 bg-gray-800 border border-gray-700 text-white text-sm rounded"
+                            />
+                          </label>
                         ) : (
-                          <span className="text-sm text-gray-300">
-                            {sub.tokenBalance.toLocaleString()}
-                          </span>
+                          <div className="text-sm text-gray-300">
+                            <p>
+                              {(sub.aiRepliesUsed ?? 0).toLocaleString()} /{" "}
+                              {(sub.aiRepliesLimit ?? 0).toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {(sub.aiRepliesRemaining ?? 0).toLocaleString()}{" "}
+                              remaining
+                            </p>
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-400">
@@ -412,6 +515,16 @@ export default function SubscribersPage() {
                               setEditingId(sub.id);
                               setEditTier(sub.subscriptionTier || "none");
                               setEditTokens(sub.tokenBalance);
+                              setEditStatus(sub.subscriptionStatus || "manual");
+                              setEditProvider(sub.billingProvider || "manual");
+                              setEditStartDate(
+                                sub.subscriptionStartDate?.slice(0, 10) || "",
+                              );
+                              setEditExpiresAt(
+                                sub.subscriptionExpiresAt?.slice(0, 10) || "",
+                              );
+                              setEditReplyLimit(sub.monthlyReplyLimit || 0);
+                              setEditNotes(sub.subscriptionNotes || "");
                             }}
                             className="px-3 py-1.5 text-xs font-medium text-indigo-400 hover:text-indigo-300 hover:bg-gray-800 rounded-lg transition-colors"
                           >

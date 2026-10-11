@@ -1,6 +1,6 @@
 # Agentix Transformation Plan
 
-Last updated: 2026-06-14
+Last updated: 2026-10-12
 
 ## 1. Current Architecture Summary
 
@@ -16,17 +16,18 @@ The core SaaS flow already exists: customers sign up, get a workspace, upload do
 
 ## 2. Existing Issues and Gaps
 
-- Public landing page still sells Agentix as a Gumroad/source-code product.
-- Gumroad/source-code copy appears in the README.
-- Pricing config is old, monthly-only, and not aligned with the new affordable SaaS plans.
-- OpenAI is hardcoded for chat and embeddings.
-- Customers can see model names in the builder UI.
-- Usage is displayed as "tokens" even though the runtime decrements one credit per AI reply.
-- Limits are duplicated across API controllers and admin code.
-- Admin can edit tier and token balance, but does not yet have a full local annual subscription model with dates, notes, or expiry state.
-- Stripe works for basic subscription activation/cancelation, but lacks robust status history, failed-payment handling, yearly price IDs, and a customer portal.
-- Paddle can be used as the primary global card checkout provider when Stripe is unavailable, but it requires Paddle merchant approval, product/price setup, approved checkout domain, client token, API key, and webhook secret.
-- API authorization relies heavily on email parameters in several NestJS endpoints.
+- The marketing flow now uses SaaS product positioning rather than source-code sales.
+- Shared pricing config includes the requested USD monthly/yearly prices and capped BDT service packages; billing now supports configured monthly and yearly checkout.
+- DeepSeek is the default chat provider with OpenAI fallback; OpenAI remains required for embeddings.
+- `WorkspaceMonthlyUsage` and manual subscription fields are schema-backed, and administrators can edit existing workspaces' plans, dates, status, monthly limits, and notes.
+- Legacy `tokenBalance` is still decremented as a second usage gate and is refilled to the plan limit on the first request in a new calendar month.
+- The admin subscriber editor cannot create a user/workspace for a new client.
+- Failed chat generations now return errors and are not counted as successful replies.
+- Stripe/Paddle webhook processing failures return server errors so providers can retry.
+- Private API authorization now uses an internal server-to-server token and a Next.js proxy that derives customer email from NextAuth. Admin login uses a signed HttpOnly cookie and server-side credentials.
+- Uploads now validate PDF/TXT type and size, and document deletion removes associated Pinecone vectors.
+- Chat logs no longer include user message content.
+- Stripe/Paddle production credentials, price IDs, webhook secrets, merchant approval, and DNS/subdomain routing still require setup.
 
 ## 3. Files Likely to Change
 
@@ -83,14 +84,15 @@ Later phases may require:
 ### Phase 3: Usage Limits and Manual Local Clients
 
 - Centralize plan limits in `packages/config`.
-- Continue using `Workspace.tokenBalance` as reply credits for now.
-- Add minimal admin support for manual local clients if schema changes are acceptable:
+- Use the monthly usage table as the source of truth for calendar-month reply limits while keeping the legacy balance synchronized for compatibility.
+- Keep admin controls for manual local clients:
   - local/manual plan type
   - annual start/end date
   - monthly reply limit
   - payment/agreement notes
   - active/inactive/expired status
-- Add durable monthly usage table if a migration window is available.
+- Add admin user/workspace creation if it can be done without exposing admin credentials.
+- Surface reply usage on the customer dashboard.
 
 ### Phase 4: Deployment, Demo, Embed, and Polish
 
@@ -99,10 +101,11 @@ Later phases may require:
   - `app.agentix.ilogicmagic.com`
   - `demo.agentix.ilogicmagic.com`
   - `bd.agentix.ilogicmagic.com`
-- Improve public demo with a configured demo agent ID.
+- Keep the scripted public demo clearly identified, or connect it to a configured demo agent when a safe demo workspace is available.
 - Improve embed onboarding and checklist copy.
 - Add SEO metadata for new public pages.
-- Tighten CORS/admin auth/session-based API authorization.
+- Keep the private API proxy, internal-token guard, and public widget route allowlist covered by regression checks.
+- Keep upload validation, vector deletion, and privacy-safe logging covered by regression checks.
 
 ## 5. Risks
 
@@ -110,19 +113,17 @@ Later phases may require:
 - Existing workspaces may use legacy `ENTERPRISE` tier values, so pricing changes should preserve compatibility.
 - DeepSeek does not provide the same embedding API as OpenAI in the current code, so embeddings should remain OpenAI-based until an embedding alternative is selected.
 - Stripe yearly prices need real Stripe price IDs before production checkout can support annual billing.
-- Some current API endpoints trust email parameters; fixing that properly requires coordinated frontend/API auth work.
+- The server-to-server API secret and admin password must be configured consistently across web and API deployments.
 
 ## 6. Exact Next Steps
 
-1. Update shared pricing config with new USD plan amounts, annual price fields, local BDT service plans, and reusable limit helpers.
-2. Update public landing page to global SaaS positioning and remove Gumroad.
-3. Add `/bd`, `/pricing`, and `/demo`.
-4. Update dashboard billing and builder copy to hide model names/tokens from normal customers.
-5. Add model provider abstraction in the API and route chat through DeepSeek default/OpenAI fallback.
-6. Update environment docs and README.
-7. Run typecheck/build, then fix any errors introduced by the changes.
+1. Exercise manual-plan monthly renewal and reply-limit behavior at calendar boundaries and under concurrent requests.
+2. Configure production monthly/yearly Stripe prices and verify checkout/webhook delivery; configure Paddle only if enabled.
+3. Configure high-entropy `API_INTERNAL_SECRET` and `ADMIN_PASSWORD` values for production web/API services.
+4. Decide whether a live demo agent and direct admin customer/workspace creation are required for launch.
+5. Configure DNS and host-level routing for any desired subdomains.
 
-## 7. Implementation Status From This Pass
+## 7. Implementation Status Before This Pass
 
 Completed:
 
@@ -135,11 +136,15 @@ Completed:
 - OpenAI embeddings preserved for the current Pinecone RAG pipeline.
 - README and `.env.example` updated for the new product direction and provider setup.
 - Paddle checkout module, checkout page, and signed webhook handler added.
-- Typecheck and build passed.
+- Prisma validation, web/API typecheck, and the full API/web/widget production build pass.
 
 Still pending:
 
-- Full schema-backed manual annual subscription management for Bangladesh clients.
-- Durable monthly usage events and reset history.
-- Stronger session-based authorization for email-parameter API endpoints.
-- Pinecone vector cleanup when documents are deleted.
+- Manual-plan usage boundary/concurrency verification.
+- Production configuration of monthly/yearly payment price IDs and webhook secrets.
+- Admin customer/workspace creation and live demo setup.
+- Production configuration of the internal API secret and admin password; end-to-end verification against configured payment and AI services.
+
+## 8. Current Implementation Pass
+
+The worktree already contains schema-backed manual subscription fields, per-workspace monthly reply usage, admin editing for local annual clients, non-active subscription handling, the SaaS/local marketing pages, and DeepSeek/OpenAI routing. Private API and admin authorization have now been moved behind the authenticated Next.js proxy; preserve the existing work and run final validation.

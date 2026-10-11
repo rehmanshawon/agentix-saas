@@ -10,6 +10,7 @@ import { BillingModule } from "./billing/billing.module";
 import { WorkspaceModule } from "./workspace/workspace.module";
 import { AuthModule } from "./auth/auth.module";
 import { AdminModule } from "./admin/admin.module";
+import { InternalApiGuard } from "./auth/internal-api.guard";
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -35,6 +36,10 @@ import { AdminModule } from "./admin/admin.module";
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: InternalApiGuard,
     },
   ],
 })

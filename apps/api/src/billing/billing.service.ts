@@ -1,6 +1,10 @@
 import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../database/prisma.service";
 import Stripe from "stripe";
+import {
+  getPlanByPaddlePriceId,
+  getPlanByStripePriceId,
+} from "@agentix/config/pricing";
 
 interface BillingWorkspaceResult {
   workspaceId: string;
@@ -24,6 +28,10 @@ export class BillingService {
     successUrl: string,
     cancelUrl: string,
   ) {
+    if (!getPlanByStripePriceId(priceId)) {
+      throw new BadRequestException("Unknown Stripe subscription price.");
+    }
+
     const { workspaceId } = await this.findOrCreateBillingWorkspace(email);
 
     const workspace = await this.prisma.workspace.findUnique({
@@ -54,6 +62,9 @@ export class BillingService {
     const apiKey = process.env.PADDLE_API_KEY;
     if (!apiKey) {
       throw new BadRequestException("Paddle is not configured.");
+    }
+    if (!getPlanByPaddlePriceId(priceId)) {
+      throw new BadRequestException("Unknown Paddle subscription price.");
     }
 
     const { workspaceId } = await this.findOrCreateBillingWorkspace(email);

@@ -57,9 +57,8 @@ export class ChatCompletionService {
     });
 
     if (!response.ok) {
-      const text = await response.text();
       throw new Error(
-        `${config.provider} returned ${response.status}: ${text.slice(0, 300)}`,
+        `${config.provider} returned HTTP ${response.status}`,
       );
     }
 

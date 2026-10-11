@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-const ADMIN_PASSWORD_KEY = "admin-authenticated";
-
 const menuItems = [
   {
     label: "Overview",
@@ -117,34 +115,66 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";
-
   useEffect(() => {
-    if (sessionStorage.getItem(ADMIN_PASSWORD_KEY) === "true") {
-      setIsAuthenticated(true);
-    }
+    fetch("/api/admin/session", { cache: "no-store" })
+      .then(async (response) => {
+      if (!response.ok) throw new Error("Could not verify admin session.");
+      const data = await response.json();
+      setIsAuthenticated(data.authenticated === true);
+      })
+      .catch((authError) => {
+      console.error("Failed to verify admin session:", authError);
+      setError("Could not verify admin access. Please try again.");
+      })
+      .finally(() => setIsCheckingAuth(false));
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
+    try {
+      const response = await fetch("/api/admin/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+      });
+      if (response.ok) {
       setIsAuthenticated(true);
-      sessionStorage.setItem(ADMIN_PASSWORD_KEY, "true");
+      setPassword("");
       setError("");
-    } else {
-      setError("Invalid admin password.");
+      return;
+      }
+      const data = await response.json().catch(() => ({}));
+      setError(data.error || "Invalid admin password.");
+    } catch (loginError) {
+      console.error("Admin login failed:", loginError);
+      setError("Could not sign in. Please try again.");
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
-    setIsAuthenticated(false);
-    router.push("/admin");
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/admin/session", { method: "DELETE" });
+      if (!response.ok) throw new Error(`Sign out failed (${response.status})`);
+      setIsAuthenticated(false);
+      router.push("/admin");
+    } catch (logoutError) {
+      console.error("Admin logout failed:", logoutError);
+      setError("Could not sign out. Please try again.");
+    }
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+      <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -237,6 +267,11 @@ export default function AdminLayout({
 
         {/* Bottom Actions */}
         <div className="p-3 border-t border-gray-800 space-y-2">
+          {error && (
+            <p role="alert" className="text-xs text-red-400">
+              {error}
+            </p>
+          )}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="w-full flex items-center justify-center px-3 py-2 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors"

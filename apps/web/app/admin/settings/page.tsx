@@ -22,7 +22,6 @@ interface AdminSettings {
   fromEmail: string;
 
   // Security
-  adminPassword: string;
   rateLimitPerMin: number;
   sessionTimeout: number;
 
@@ -132,9 +131,7 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState("platform");
   const [saveMessage, setSaveMessage] = useState("");
 
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://api.ilogicmagic.com";
+  const API_URL = "/api/backend";
 
   useEffect(() => {
     fetchSettings();
@@ -143,9 +140,7 @@ export default function SettingsPage() {
   const fetchSettings = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/settings`, {
-        headers: { "x-admin-key": ADMIN_PASSWORD },
-      });
+      const res = await fetch(`${API_URL}/api/admin/settings`);
       if (res.ok) {
         const data = await res.json();
         setSettings(data.settings);
@@ -169,10 +164,7 @@ export default function SettingsPage() {
     try {
       const res = await fetch(`${API_URL}/api/admin/settings`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": ADMIN_PASSWORD,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
       });
 
@@ -452,13 +444,11 @@ export default function SettingsPage() {
             <h3 className="text-lg font-semibold text-white mb-4">
               Security Settings
             </h3>
-            <InputField
-              label="Admin Password"
-              description="Password to access this admin panel"
-              value={settings?.adminPassword || ""}
-              onChange={(v) => updateSetting("adminPassword", v)}
-              type="password"
-            />
+            <p className="text-sm text-gray-400">
+              Admin access is controlled by the server-side ADMIN_PASSWORD
+              environment variable. Update it in your deployment settings; it
+              is never returned to the browser.
+            </p>
             <InputField
               label="Rate Limit (Requests/Minute)"
               description="Max API requests per minute per IP"

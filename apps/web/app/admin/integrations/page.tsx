@@ -95,9 +95,7 @@ export default function IntegrationsPage() {
   const [isAddingWebhook, setIsAddingWebhook] = useState(false);
   const [webhookMessage, setWebhookMessage] = useState("");
 
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://api.ilogicmagic.com";
+  const API_URL = "/api/backend";
 
   useEffect(() => {
     fetchIntegrationStatus();
@@ -107,9 +105,7 @@ export default function IntegrationsPage() {
   const fetchIntegrationStatus = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/integrations/status`, {
-        headers: { "x-admin-key": ADMIN_PASSWORD },
-      });
+      const res = await fetch(`${API_URL}/api/admin/integrations/status`);
       if (res.ok) {
         const data = await res.json();
         setIntegrations(data.integrations);
@@ -123,9 +119,7 @@ export default function IntegrationsPage() {
 
   const fetchWebhooks = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/webhooks`, {
-        headers: { "x-admin-key": ADMIN_PASSWORD },
-      });
+      const res = await fetch(`${API_URL}/api/admin/webhooks`);
       if (res.ok) {
         const data = await res.json();
         setWebhooks(data.webhooks);
@@ -143,10 +137,7 @@ export default function IntegrationsPage() {
     try {
       const res = await fetch(`${API_URL}/api/admin/webhooks`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": ADMIN_PASSWORD,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           url: newWebhookUrl,
           events: newWebhookEvents,
@@ -173,7 +164,6 @@ export default function IntegrationsPage() {
     try {
       await fetch(`${API_URL}/api/admin/webhooks/${id}`, {
         method: "DELETE",
-        headers: { "x-admin-key": ADMIN_PASSWORD },
       });
       fetchWebhooks();
     } catch (error) {
@@ -185,10 +175,7 @@ export default function IntegrationsPage() {
     try {
       await fetch(`${API_URL}/api/admin/webhooks/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": ADMIN_PASSWORD,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !currentStatus }),
       });
       fetchWebhooks();
@@ -386,7 +373,7 @@ export default function IntegrationsPage() {
               and authentication details.
             </p>
             <a
-              href={`${API_URL}/api/docs`}
+              href={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/docs`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"

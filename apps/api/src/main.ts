@@ -9,6 +9,8 @@ async function bootstrap() {
     "DATABASE_URL",
     "PINECONE_API_KEY",
     "PINECONE_INDEX_NAME",
+    "API_INTERNAL_SECRET",
+    "ADMIN_PASSWORD",
   ];
 
   const defaultProvider =
@@ -41,7 +43,7 @@ async function bootstrap() {
   app.enableCors({
     origin: "*",
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true,
+    credentials: false,
   });
 
   // Global validation
@@ -52,8 +54,9 @@ async function bootstrap() {
     .setTitle("Agentix API")
     .setDescription(
       "Complete API documentation for the Agentix SaaS platform.\n\n" +
-        "**Authentication:** Most endpoints require a valid user session (via NextAuth JWT).\n\n" +
-        "**Admin Endpoints:** Require `x-admin-key` header.",
+        "**Authentication:** Private endpoints are available through the authenticated Agentix web app proxy. Direct API requests require the server-only `x-agentix-internal-token` header.\n\n" +
+        "**Public endpoints:** Password reset and public widget chat/configuration endpoints remain available without an internal token.\n\n" +
+        "**Admin endpoints:** Also require the server-injected `x-admin-key` header.",
     )
     .setVersion("1.0")
     .addTag("Chat", "Chat widget and agent configuration")

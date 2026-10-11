@@ -18,6 +18,22 @@ export class RagService {
     });
   }
 
+  async deleteDocumentVectors(
+    documentId: string,
+    workspaceId: string,
+  ): Promise<void> {
+    const pineconeIndex = this.pinecone.Index(
+      process.env.PINECONE_INDEX_NAME || "agentix-index",
+    );
+
+    await pineconeIndex.deleteMany({
+      filter: {
+        documentId: { $eq: documentId },
+        workspaceId: { $eq: workspaceId },
+      },
+    });
+  }
+
   /**
    * Takes an uploaded file, extracts text, chunks it, and saves it to the Vector DB.
    * @param fileBuffer The raw binary data of the uploaded file
@@ -110,10 +126,8 @@ export class RagService {
         `Successfully vectorized and stored document ${documentId}.`,
       );
       return true;
-    } catch (error) {
-      this.logger.error(
-        `Failed to process document ${documentId}: ${error.message}`,
-      );
+    } catch {
+      this.logger.error(`Failed to process document ${documentId}.`);
       throw new Error("Vectorization failed.");
     }
   }

@@ -87,7 +87,7 @@ export default async function HomePage() {
               href="/signup"
               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
-              Start free
+              Get started
             </Link>
           </div>
         </div>

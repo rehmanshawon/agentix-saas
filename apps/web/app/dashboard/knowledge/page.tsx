@@ -89,7 +89,7 @@ export default function KnowledgeBasePage() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const email = session?.user?.email as string | undefined;
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const API_URL = "/api/backend";
 
   const fetchDocuments = useCallback(async () => {
     if (!email) return;

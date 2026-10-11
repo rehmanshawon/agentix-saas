@@ -94,21 +94,15 @@ export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState<"revenue" | "usage">("revenue");
   const [isLoading, setIsLoading] = useState(true);
 
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://api.ilogicmagic.com";
+  const API_URL = "/api/backend";
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
         const [revenueRes, usageRes] = await Promise.all([
-          fetch(`${API_URL}/api/admin/analytics/revenue`, {
-            headers: { "x-admin-key": ADMIN_PASSWORD },
-          }),
-          fetch(`${API_URL}/api/admin/analytics/usage`, {
-            headers: { "x-admin-key": ADMIN_PASSWORD },
-          }),
+          fetch(`${API_URL}/api/admin/analytics/revenue`),
+          fetch(`${API_URL}/api/admin/analytics/usage`),
         ]);
 
         if (revenueRes.ok) setRevenue(await revenueRes.json());
@@ -120,7 +114,7 @@ export default function AnalyticsPage() {
       }
     };
     fetchData();
-  }, [API_URL, ADMIN_PASSWORD]);
+  }, [API_URL]);
 
   if (isLoading) {
     return (

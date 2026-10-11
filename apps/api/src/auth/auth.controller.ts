@@ -4,7 +4,6 @@ import {
   Body,
   HttpException,
   HttpStatus,
-  Logger,
 } from "@nestjs/common";
 import { PrismaService } from "../database/prisma.service";
 import * as crypto from "crypto";
@@ -12,8 +11,6 @@ import * as bcrypt from "bcryptjs";
 
 @Controller("auth")
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   @Post("forgot-password")
@@ -58,16 +55,6 @@ export class AuthController {
 
     // Build reset URL
     const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
-
-    // In production, send email via Resend/SendGrid/NodeMailer
-    // For now, log to console (buyer integrates their own email provider)
-    this.logger.log(`\n📧 PASSWORD RESET REQUEST`);
-    this.logger.log(`   Email: ${email}`);
-    this.logger.log(`   Reset URL: ${resetUrl}`);
-    this.logger.log(`   Token expires: ${expiresAt.toISOString()}\n`);
-
-    // TODO: Uncomment when email provider is configured
-    // await this.emailService.sendPasswordReset(email, resetUrl);
 
     return {
       message:
@@ -142,8 +129,6 @@ export class AuthController {
       where: { id: resetRecord.id },
       data: { used: true },
     });
-
-    this.logger.log(`Password reset successful for user: ${email}`);
 
     return { message: "Password reset successful. You may now log in." };
   }

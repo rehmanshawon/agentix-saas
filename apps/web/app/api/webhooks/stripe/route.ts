@@ -49,6 +49,15 @@ export async function POST(req: Request) {
           data: {
             stripeCustomerId: stripeCustomerId,
             subscriptionTier: selectedTier.id,
+            subscriptionStatus: "active",
+            billingProvider: "stripe",
+            subscriptionStartDate: new Date(
+              subscription.current_period_start * 1000,
+            ),
+            subscriptionExpiresAt: new Date(
+              subscription.current_period_end * 1000,
+            ),
+            monthlyReplyLimit: null,
             tokenBalance: selectedTier.limits.maxMessagesPerMonth,
           },
         });
@@ -66,12 +75,23 @@ export async function POST(req: Request) {
 
         const updatedTier = getPlanByStripePriceId(priceId);
 
-        if (subscription.status === "active" && updatedTier) {
+        if (updatedTier) {
+          const isActive = subscription.status === "active";
           await prisma.workspace.updateMany({
             where: { stripeCustomerId: stripeCustomerId },
             data: {
-              subscriptionTier: updatedTier.id,
-              tokenBalance: updatedTier.limits.maxMessagesPerMonth,
+              subscriptionTier: isActive ? updatedTier.id : null,
+              subscriptionStatus: subscription.status,
+              billingProvider: "stripe",
+              subscriptionStartDate: new Date(
+                subscription.current_period_start * 1000,
+              ),
+              subscriptionExpiresAt: new Date(
+                subscription.current_period_end * 1000,
+              ),
+              tokenBalance: isActive
+                ? updatedTier.limits.maxMessagesPerMonth
+                : 0,
             },
           });
 
@@ -90,6 +110,8 @@ export async function POST(req: Request) {
           where: { stripeCustomerId: stripeCustomerId },
           data: {
             subscriptionTier: null,
+            subscriptionStatus: "canceled",
+            billingProvider: "stripe",
             tokenBalance: 0,
           },
         });
@@ -105,9 +127,10 @@ export async function POST(req: Request) {
     }
   } catch (error: any) {
     console.error(`Error processing webhook: ${error.message}`);
-    return new NextResponse("Webhook handler failed, but event received", {
-      status: 200,
-    });
+    return NextResponse.json(
+      { error: "Webhook processing failed" },
+      { status: 500 },
+    );
   }
 
   return new NextResponse("Success", { status: 200 });

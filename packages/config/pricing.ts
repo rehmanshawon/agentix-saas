@@ -39,7 +39,8 @@ export const SAAS_PRICING: Record<Tier, SubscriptionPlan> = {
       process.env.NEXT_PUBLIC_STRIPE_STARTER_MONTHLY_PRICE_ID ||
       "price_1TRFgKIKK1eQ7kyWBe0BpDrq",
     yearlyPriceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_YEARLY_PRICE_ID,
-    paddleMonthlyPriceId: process.env.NEXT_PUBLIC_PADDLE_STARTER_MONTHLY_PRICE_ID,
+    paddleMonthlyPriceId:
+      process.env.NEXT_PUBLIC_PADDLE_STARTER_MONTHLY_PRICE_ID,
     paddleYearlyPriceId: process.env.NEXT_PUBLIC_PADDLE_STARTER_YEARLY_PRICE_ID,
     monthlyPrice: 7,
     yearlyPrice: 69,
@@ -65,7 +66,8 @@ export const SAAS_PRICING: Record<Tier, SubscriptionPlan> = {
       process.env.NEXT_PUBLIC_STRIPE_GROWTH_MONTHLY_PRICE_ID ||
       "price_1TRFaQIKK1eQ7kyWkCJz2fFJ",
     yearlyPriceId: process.env.NEXT_PUBLIC_STRIPE_GROWTH_YEARLY_PRICE_ID,
-    paddleMonthlyPriceId: process.env.NEXT_PUBLIC_PADDLE_GROWTH_MONTHLY_PRICE_ID,
+    paddleMonthlyPriceId:
+      process.env.NEXT_PUBLIC_PADDLE_GROWTH_MONTHLY_PRICE_ID,
     paddleYearlyPriceId: process.env.NEXT_PUBLIC_PADDLE_GROWTH_YEARLY_PRICE_ID,
     monthlyPrice: 15,
     yearlyPrice: 149,
@@ -183,7 +185,8 @@ export function getTierLimits(tier: string | null): PlanLimits {
   }
 
   return (
-    SAAS_PRICING[tier as Tier]?.limits || {
+    SAAS_PRICING[tier as Tier]?.limits ||
+    LOCAL_SERVICE_PLANS.find((plan) => plan.id === tier)?.limits || {
       maxAgents: 1,
       maxMessagesPerMonth: 0,
       maxStorageDocs: 1,
@@ -193,7 +196,11 @@ export function getTierLimits(tier: string | null): PlanLimits {
 
 export function getTierName(tier: string | null): string {
   if (!tier) return "No Plan";
-  return SAAS_PRICING[tier as Tier]?.name || tier;
+  return (
+    SAAS_PRICING[tier as Tier]?.name ||
+    LOCAL_SERVICE_PLANS.find((plan) => plan.id === tier)?.name ||
+    tier
+  );
 }
 
 export function getMonthlyPrice(tier: string | null): number {
@@ -201,7 +208,9 @@ export function getMonthlyPrice(tier: string | null): number {
   return SAAS_PRICING[tier as Tier]?.monthlyPrice || 0;
 }
 
-export function getPlanByStripePriceId(priceId: string): SubscriptionPlan | null {
+export function getPlanByStripePriceId(
+  priceId: string,
+): SubscriptionPlan | null {
   return (
     Object.values(SAAS_PRICING).find(
       (plan) =>
@@ -210,7 +219,9 @@ export function getPlanByStripePriceId(priceId: string): SubscriptionPlan | null
   );
 }
 
-export function getPlanByPaddlePriceId(priceId: string): SubscriptionPlan | null {
+export function getPlanByPaddlePriceId(
+  priceId: string,
+): SubscriptionPlan | null {
   return (
     Object.values(SAAS_PRICING).find(
       (plan) =>

@@ -29,6 +29,12 @@ model Workspace {
   name             String
   stripeCustomerId String?
   subscriptionTier String?           // NULL = no plan, "STARTER" | "GROWTH" | "ENTERPRISE"
+  subscriptionStatus String?         // active, past_due, canceled, or manual
+  billingProvider   String?          // stripe, paddle, or manual
+  subscriptionStartDate DateTime?
+  subscriptionExpiresAt DateTime?
+  subscriptionNotes String? @db.Text
+  monthlyReplyLimit Int?
   tokenBalance     Int               @default(0)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -36,6 +42,7 @@ model Workspace {
   members          WorkspaceMember[]
   agents           Agent[]
   documents        Document[]
+  monthlyUsage     WorkspaceMonthlyUsage[]
 }
 
 model WorkspaceMember {
@@ -104,4 +111,18 @@ model OutgoingWebhook {
   createdAt   DateTime @default(now())
 
   //workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model WorkspaceMonthlyUsage {
+  id          String   @id @default(uuid())
+  workspaceId String
+  monthStart  DateTime
+  aiReplies   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, monthStart])
+  @@index([monthStart])
 }

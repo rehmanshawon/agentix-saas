@@ -13,7 +13,7 @@ Production direction:
 
 ## Current Stack
 
-- `apps/web`: Next.js 14 dashboard, auth, marketing pages, admin, Stripe webhook
+- `apps/web`: Next.js 14 dashboard, auth, marketing pages, admin, Stripe/Paddle webhooks
 - `apps/api`: NestJS API for chat, knowledge uploads, RAG, billing, admin
 - `apps/widget`: Vanilla JS embeddable widget built with Vite
 - `packages/database`: Prisma schema/client for MySQL
@@ -23,12 +23,12 @@ Production direction:
 
 - `/`: Global SaaS landing page
 - `/pricing`: Global Stripe plans and Bangladesh annual service packages
-- `/demo`: Public non-Gumroad demo entry point
+- `/demo`: Public scripted FAQ demo (a live demo workspace is not configured yet)
 - `/bd`: Bangladesh done-for-you service page
 - `/dashboard`: Customer app
 - `/dashboard/knowledge`: Upload and train documents
 - `/dashboard/builder`: Configure chatbot and copy embed snippet
-- `/dashboard/billing`: Stripe subscription plans
+- `/dashboard/billing`: Monthly/yearly Stripe or Paddle subscription plans
 - `/admin`: Admin dashboard
 
 ## Pricing Model
@@ -69,18 +69,42 @@ business-facing limits such as AI replies, chatbots, and documents.
 
 ```bash
 corepack pnpm install
-cp .env.example .env
+if [ ! -f .env ]; then cp .env.example .env; fi
 docker compose up -d
 corepack pnpm db:push
 corepack pnpm db:generate
 corepack pnpm dev
 ```
 
+For local work, `.env` should use the Docker Compose MySQL URL on port `3307`.
+Set a random `API_INTERNAL_SECRET` and a strong `ADMIN_PASSWORD` in both the
+root `.env` and `apps/web/.env.local`; also set `API_URL` to
+`http://localhost:3001` in the web environment. The web environment needs
+`DATABASE_URL`, `NEXTAUTH_URL=http://localhost:3000`, `NEXTAUTH_SECRET`, and
+`NEXT_PUBLIC_API_URL=http://localhost:3001` as well. Do not commit either
+environment file.
+
 Default local URLs:
 
 - Web: `http://localhost:3000`
 - API: `http://localhost:3001`
 - API docs: `http://localhost:3001/api/docs`
+
+### Local end-to-end widget test
+
+After configuring the required server environment variables in the root
+`.env` and `apps/web/.env.local`, start the local services with
+`corepack pnpm dev`. The root test page at `index.html` can then load your
+configured widget against `http://localhost:3001/api/chat`. Serve the
+repository root in a separate terminal with:
+
+```bash
+python3 -m http.server 8080 --bind 127.0.0.1
+```
+
+Open `http://localhost:8080/`, paste the agent ID from the Agent Builder, and
+select **Load chatbot**. See `DEPLOYMENT.md` for the required `API_URL`,
+`API_INTERNAL_SECRET`, `ADMIN_PASSWORD`, and NextAuth configuration.
 
 ## Stripe Setup
 
@@ -98,8 +122,9 @@ NEXT_PUBLIC_STRIPE_BUSINESS_YEARLY_PRICE_ID=price_...
 ```
 
 The webhook at `/api/webhooks/stripe` maps monthly or yearly price IDs to the
-same plan limits and refreshes `Workspace.tokenBalance` as monthly AI reply
-credits.
+same plan limits. `WorkspaceMonthlyUsage` records replies by calendar month;
+the legacy `Workspace.tokenBalance` is also maintained and refilled when a
+workspace begins using the service in a new month.
 
 ## Paddle Setup
 
@@ -135,7 +160,8 @@ The Paddle checkout page is:
 ```
 
 Paddle must approve the checkout domain/payment link before live checkout works.
-Webhook activation updates the workspace plan and monthly AI reply balance.
+Webhook activation updates the workspace plan. Monthly reply caps are tracked
+by calendar month, regardless of whether checkout renews monthly or yearly.
 
 ## Subdomain Deployment Notes
 
@@ -159,11 +185,16 @@ Until subdomain routing is configured, the route-based structure works:
 - `docs/AGENTIX_CODEBASE_AUDIT.md`
 - `docs/AGENTIX_TRANSFORMATION_PLAN.md`
 
-## Known Next Work
+## Known Limitations
 
-- Add durable monthly usage events instead of only `Workspace.tokenBalance`.
-- Add full admin-managed annual local client fields: start/end date, notes,
-  active/inactive/expired state, and manual payment metadata.
-- Tighten API authorization for endpoints that currently accept user email
-  parameters.
-- Add Pinecone vector deletion when a document is deleted.
+- Admins can assign manual plans to existing workspaces; creating a user and
+  workspace directly from the admin UI is not yet supported.
+- Private dashboard and admin API calls pass through a server-side authenticated
+  proxy; the API requires a shared internal secret for non-public endpoints.
+  Configure `API_INTERNAL_SECRET`, `API_URL`, `ADMIN_PASSWORD`, and the
+  NextAuth secrets as described in `DEPLOYMENT.md`.
+
+Manual annual client fields are stored on `Workspace` and managed from the
+admin subscriber editor. Set a `BD_*` tier, `billingProvider=manual`, annual
+dates, a monthly reply override, and notes for a local client. Expired
+workspaces are blocked from public chat by the API.

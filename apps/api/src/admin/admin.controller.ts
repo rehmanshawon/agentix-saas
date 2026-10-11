@@ -16,22 +16,45 @@ import {
   getMonthlyPrice,
   getTierLimits,
   getTierName,
+  LOCAL_SERVICE_PLANS,
+  SAAS_PRICING,
 } from "@agentix/config/pricing";
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 
 @Controller("api/admin")
 export class AdminController {
   constructor(private readonly prisma: PrismaService) {}
 
   private validateAdmin(adminKey: string) {
-    if (adminKey !== ADMIN_PASSWORD) {
+    if (!ADMIN_PASSWORD || adminKey !== ADMIN_PASSWORD) {
       throw new HttpException("Unauthorized", HttpStatus.UNAUTHORIZED);
     }
   }
 
   private getReplyLimit(tier: string | null) {
     return getTierLimits(tier).maxMessagesPerMonth;
+  }
+
+  private parseSubscriptionDate(
+    value: string | null,
+    fieldName: string,
+    endOfDay = false,
+  ): Date | null {
+    if (value === null) return null;
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      throw new HttpException(
+        `${fieldName} must be a valid date.`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (endOfDay && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      date.setUTCHours(23, 59, 59, 999);
+    }
+    return date;
   }
 
   @Get("dashboard/stats")
@@ -223,26 +246,125 @@ export class AdminController {
   async getWorkspaces(@Headers("x-admin-key") adminKey: string) {
     this.validateAdmin(adminKey);
 
+    const now = new Date();
+    const monthStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
     const workspaces = await this.prisma.workspace.findMany({
       include: {
         members: {
           include: { user: { select: { email: true, name: true } } },
           take: 1,
         },
+        monthlyUsage: {
+          where: { monthStart },
+          select: { aiReplies: true },
+          take: 1,
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return { workspaces };
+    return {
+      workspaces: workspaces.map((workspace) => {
+        const aiRepliesLimit =
+          workspace.monthlyReplyLimit ??
+          this.getReplyLimit(workspace.subscriptionTier);
+        const aiRepliesUsed = workspace.monthlyUsage[0]?.aiReplies ?? 0;
+        const { monthlyUsage, ...workspaceDetails } = workspace;
+
+        return {
+          ...workspaceDetails,
+          aiRepliesUsed,
+          aiRepliesLimit,
+          aiRepliesRemaining: Math.max(0, aiRepliesLimit - aiRepliesUsed),
+        };
+      }),
+    };
   }
 
   @Patch("workspaces/:id")
   async updateWorkspace(
     @Headers("x-admin-key") adminKey: string,
     @Param("id") id: string,
-    @Body() body: { subscriptionTier?: string | null; tokenBalance?: number },
+    @Body()
+    body: {
+      subscriptionTier?: string | null;
+      tokenBalance?: number;
+      subscriptionStatus?: string | null;
+      billingProvider?: string | null;
+      subscriptionStartDate?: string | null;
+      subscriptionExpiresAt?: string | null;
+      subscriptionNotes?: string | null;
+      monthlyReplyLimit?: number | null;
+    },
   ) {
     this.validateAdmin(adminKey);
+
+    const validTiers = new Set([
+      ...Object.keys(SAAS_PRICING),
+      ...LOCAL_SERVICE_PLANS.map((plan) => plan.id),
+    ]);
+    if (
+      body.subscriptionTier !== undefined &&
+      body.subscriptionTier !== null &&
+      body.subscriptionTier !== "none" &&
+      !validTiers.has(body.subscriptionTier)
+    ) {
+      throw new HttpException("Invalid subscription plan.", HttpStatus.BAD_REQUEST);
+    }
+    if (
+      body.subscriptionStatus !== undefined &&
+      body.subscriptionStatus !== null &&
+      !["active", "manual", "past_due", "canceled", "expired"].includes(
+        body.subscriptionStatus,
+      )
+    ) {
+      throw new HttpException(
+        "Invalid subscription status.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (
+      body.billingProvider !== undefined &&
+      body.billingProvider !== null &&
+      !["stripe", "paddle", "manual"].includes(body.billingProvider)
+    ) {
+      throw new HttpException(
+        "Invalid billing provider.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (
+      body.tokenBalance !== undefined &&
+      (!Number.isInteger(body.tokenBalance) || body.tokenBalance < 0)
+    ) {
+      throw new HttpException(
+        "AI reply balance must be a non-negative integer.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (
+      body.monthlyReplyLimit !== undefined &&
+      body.monthlyReplyLimit !== null &&
+      (!Number.isInteger(body.monthlyReplyLimit) || body.monthlyReplyLimit < 1)
+    ) {
+      throw new HttpException(
+        "Monthly AI reply limit must be a positive integer.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (
+      body.subscriptionNotes !== undefined &&
+      body.subscriptionNotes !== null &&
+      (typeof body.subscriptionNotes !== "string" ||
+        body.subscriptionNotes.length > 5000)
+    ) {
+      throw new HttpException(
+        "Subscription notes must be 5,000 characters or fewer.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     const data: any = {};
     if (body.subscriptionTier !== undefined) {
@@ -251,6 +373,31 @@ export class AdminController {
     }
     if (body.tokenBalance !== undefined) {
       data.tokenBalance = body.tokenBalance;
+    }
+    if (body.subscriptionStatus !== undefined) {
+      data.subscriptionStatus = body.subscriptionStatus;
+    }
+    if (body.billingProvider !== undefined) {
+      data.billingProvider = body.billingProvider;
+    }
+    if (body.subscriptionStartDate !== undefined) {
+      data.subscriptionStartDate = this.parseSubscriptionDate(
+        body.subscriptionStartDate,
+        "Subscription start date",
+      );
+    }
+    if (body.subscriptionExpiresAt !== undefined) {
+      data.subscriptionExpiresAt = this.parseSubscriptionDate(
+        body.subscriptionExpiresAt,
+        "Subscription expiry date",
+        true,
+      );
+    }
+    if (body.subscriptionNotes !== undefined) {
+      data.subscriptionNotes = body.subscriptionNotes;
+    }
+    if (body.monthlyReplyLimit !== undefined) {
+      data.monthlyReplyLimit = body.monthlyReplyLimit;
     }
 
     const workspace = await this.prisma.workspace.update({
@@ -294,9 +441,24 @@ export class AdminController {
       throw new HttpException("Workspace not found", HttpStatus.NOT_FOUND);
     }
 
-    const tierMax = workspace.subscriptionTier
-      ? this.getReplyLimit(workspace.subscriptionTier)
-      : 0;
+    const now = new Date();
+    const monthStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
+    const monthlyUsage =
+      await this.prisma.client.workspaceMonthlyUsage.findUnique({
+        where: {
+          workspaceId_monthStart: {
+            workspaceId: id,
+            monthStart,
+          },
+        },
+      });
+    const replyLimit =
+      workspace.monthlyReplyLimit ??
+      this.getReplyLimit(workspace.subscriptionTier);
+    const repliesUsed = monthlyUsage?.aiReplies ?? 0;
+    const tierMax = this.getReplyLimit(workspace.subscriptionTier);
 
     return {
       ...workspace,
@@ -305,6 +467,9 @@ export class AdminController {
         : 0,
       tierMaxTokens: tierMax,
       tokensUsed: tierMax - workspace.tokenBalance,
+      aiRepliesUsed: repliesUsed,
+      aiRepliesLimit: replyLimit,
+      aiRepliesRemaining: Math.max(0, replyLimit - repliesUsed),
       stripeDashboardUrl: workspace.stripeCustomerId
         ? `https://dashboard.stripe.com/customers/${workspace.stripeCustomerId}`
         : null,
@@ -474,7 +639,6 @@ export class AdminController {
       smtpUser: "",
       smtpPass: "",
       fromEmail: "",
-      adminPassword: ADMIN_PASSWORD,
       rateLimitPerMin: 10,
       sessionTimeout: 86400,
       stripeMode: process.env.STRIPE_SECRET_KEY?.startsWith("sk_live")

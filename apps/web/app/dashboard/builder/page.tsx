@@ -58,7 +58,7 @@ export default function AgentBuilderPage() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const email = session?.user?.email as string | undefined;
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const API_URL = "/api/backend";
   const WIDGET_URL =
     process.env.NEXT_PUBLIC_WIDGET_URL || "http://localhost:3000";
 

@@ -136,6 +136,12 @@ exports.Prisma.WorkspaceScalarFieldEnum = {
   name: 'name',
   stripeCustomerId: 'stripeCustomerId',
   subscriptionTier: 'subscriptionTier',
+  subscriptionStatus: 'subscriptionStatus',
+  billingProvider: 'billingProvider',
+  subscriptionStartDate: 'subscriptionStartDate',
+  subscriptionExpiresAt: 'subscriptionExpiresAt',
+  subscriptionNotes: 'subscriptionNotes',
+  monthlyReplyLimit: 'monthlyReplyLimit',
   tokenBalance: 'tokenBalance',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -191,6 +197,15 @@ exports.Prisma.OutgoingWebhookScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.WorkspaceMonthlyUsageScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  monthStart: 'monthStart',
+  aiReplies: 'aiReplies',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -209,7 +224,8 @@ exports.Prisma.ModelName = {
   Agent: 'Agent',
   Document: 'Document',
   PasswordResetToken: 'PasswordResetToken',
-  OutgoingWebhook: 'OutgoingWebhook'
+  OutgoingWebhook: 'OutgoingWebhook',
+  WorkspaceMonthlyUsage: 'WorkspaceMonthlyUsage'
 };
 
 /**

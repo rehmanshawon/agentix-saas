@@ -34,6 +34,10 @@ export class WorkspaceController {
         id: true,
         name: true,
         subscriptionTier: true,
+        subscriptionStatus: true,
+        billingProvider: true,
+        subscriptionExpiresAt: true,
+        monthlyReplyLimit: true,
         tokenBalance: true,
       },
     });
@@ -50,10 +54,17 @@ export class WorkspaceController {
       where: { workspaceId, status: "READY" },
     });
 
-    const tokensUsed =
-      tierLimits.maxMessagesPerMonth > 0
-        ? tierLimits.maxMessagesPerMonth - (workspace?.tokenBalance || 0)
-        : 0;
+    const now = new Date();
+    const monthStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
+    const monthlyUsage =
+      await this.prisma.client.workspaceMonthlyUsage.findUnique({
+        where: { workspaceId_monthStart: { workspaceId, monthStart } },
+      });
+    const monthlyReplyLimit =
+      workspace?.monthlyReplyLimit ?? tierLimits.maxMessagesPerMonth;
+    const repliesUsed = monthlyUsage?.aiReplies || 0;
 
     return {
       workspace: {
@@ -62,7 +73,13 @@ export class WorkspaceController {
         usage: {
           agents: agentCount,
           documents: docCount,
-          tokensUsed: Math.max(0, tokensUsed),
+          aiRepliesUsed: repliesUsed,
+          aiRepliesRemaining: Math.max(0, monthlyReplyLimit - repliesUsed),
+          aiRepliesLimit: monthlyReplyLimit,
+          tokensUsed: Math.max(
+            0,
+            tierLimits.maxMessagesPerMonth - (workspace?.tokenBalance || 0),
+          ),
         },
       },
     };

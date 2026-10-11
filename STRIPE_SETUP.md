@@ -1,226 +1,79 @@
-## `STRIPE_SETUP.md`
+# Stripe Setup
 
-````markdown
-# 💳 Stripe Setup Guide for Agentix
+Stripe provides global self-service subscriptions. Bangladesh managed-service
+plans are handled manually and should not be sent to Stripe Checkout.
 
-This guide walks you through connecting Stripe billing to your Agentix SaaS platform.
+## Create recurring prices
 
----
+Create monthly and yearly recurring prices for each plan:
 
-## 1. Create a Stripe Account
+| Plan | Monthly | Yearly |
+| --- | ---: | ---: |
+| Starter | $7 | $69 |
+| Growth | $15 | $149 |
+| Business | $29 | $299 |
 
-1. Go to [stripe.com](https://stripe.com) and create an account
-2. Toggle between **Test Mode** and **Live Mode** using the switch in the top-right corner
-3. Use Test Mode for initial setup and testing
+The plan limits and amounts are centralized in `packages/config/pricing.ts`.
+Copy the Stripe Price IDs into the web environment:
 
----
+```env
+NEXT_PUBLIC_BILLING_PROVIDER=stripe
+NEXT_PUBLIC_STRIPE_STARTER_MONTHLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_STARTER_YEARLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_GROWTH_MONTHLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_GROWTH_YEARLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_BUSINESS_MONTHLY_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_BUSINESS_YEARLY_PRICE_ID=price_...
+```
 
-## 2. Get Your API Keys
+Yearly prices are optional until configured; the billing UI disables annual
+checkout for any plan without a corresponding Price ID. Keep the amounts and
+reply/document/chatbot limits in the shared pricing config aligned with the
+Stripe products.
 
-1. Go to [Stripe Dashboard → Developers → API keys](https://dashboard.stripe.com/apikeys)
-2. Copy your **Publishable Key** (starts with `pk_test_` or `pk_live_`)
-3. Copy your **Secret Key** (starts with `sk_test_` or `sk_live_`)
+## Configure keys and webhook
 
-Add these to your `.env` file:
+Set the server-side API key and webhook signing secret:
 
 ```env
 STRIPE_SECRET_KEY=sk_test_...
-```
-````
-
----
-
-## 3. Create Products & Prices
-
-Agentix uses 3 subscription tiers. You need to create matching products in Stripe.
-
-1. Go to [Stripe Dashboard → Products](https://dashboard.stripe.com/products)
-2. Click **Add Product**
-3. Create these as **recurring** products:
-
-| Product Name | Price   | Interval |
-| ------------ | ------- | -------- |
-| **Starter**  | $29.00  | Monthly  |
-| **Growth**   | $79.00  | Monthly  |
-| **Agency**   | $299.00 | Monthly  |
-
-4. After creating each product, Stripe generates a **Price ID** (looks like `price_1ABC123...`)
-5. Copy each Price ID
-
----
-
-## 4. Update the Pricing Configuration
-
-Open `packages/config/pricing.ts` and replace the dummy Price IDs with your real ones:
-
-```typescript
-export const SAAS_PRICING: Record<Tier, SubscriptionPlan> = {
-  STARTER: {
-    id: "STARTER",
-    name: "Starter",
-    monthlyPriceId: "price_1ABC123...", // ← Your real Starter Price ID
-    price: 29,
-    limits: {
-      maxAgents: 1,
-      maxMessagesPerMonth: 500,
-      maxStorageDocs: 5,
-    },
-    features: [
-      "1 Custom AI Agent",
-      "500 AI Messages per month",
-      "5 Document Uploads",
-      "Embeddable Website Widget",
-      "Standard RAG Document Search",
-      "Email Support",
-    ],
-  },
-  GROWTH: {
-    id: "GROWTH",
-    name: "Growth",
-    monthlyPriceId: "price_2DEF456...", // ← Your real Growth Price ID
-    price: 79,
-    isPopular: true,
-    limits: {
-      maxAgents: 5,
-      maxMessagesPerMonth: 5000,
-      maxStorageDocs: 20,
-    },
-    features: [
-      "Everything in Starter",
-      "Up to 5 AI Agents",
-      "5,000 AI Messages per month",
-      "20 Document Uploads",
-      "Advanced Webhook Actions",
-      "Analytics Dashboard",
-      "Priority Support",
-    ],
-  },
-  ENTERPRISE: {
-    id: "ENTERPRISE",
-    name: "Agency",
-    monthlyPriceId: "price_3GHI789...", // ← Your real Agency Price ID
-    price: 299,
-    limits: {
-      maxAgents: 20,
-      maxMessagesPerMonth: 25000,
-      maxStorageDocs: 50,
-    },
-    features: [
-      "Everything in Growth",
-      "Up to 20 AI Agents",
-      "25,000 AI Messages per month",
-      "50 Document Uploads",
-      "Multi-User Workspaces",
-      "API Access",
-      "Priority Human Handoff",
-      "Dedicated Support",
-    ],
-  },
-};
+STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-Also update your `.env`:
-
-```env
-NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID=price_1ABC123...
-NEXT_PUBLIC_STRIPE_PRO_PRICE_ID=price_2DEF456...
-NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID=price_3GHI789...
-```
-
----
-
-## 5. Set Up Webhooks
-
-Webhooks allow Stripe to notify your server when payments succeed, subscriptions renew, or customers cancel.
-
-### For Local Development (Testing)
-
-Use the Stripe CLI:
+For local testing, forward events with the Stripe CLI:
 
 ```bash
-# Install Stripe CLI: https://stripe.com/docs/stripe-cli
 stripe login
 stripe listen --forward-to http://localhost:3000/api/webhooks/stripe
 ```
 
-Copy the **webhook signing secret** (starts with `whsec_`) and add to `.env`:
+For production, register `https://<web-host>/api/webhooks/stripe` and subscribe
+to:
 
-```env
-STRIPE_WEBHOOK_SECRET=whsec_...
-```
+- `checkout.session.completed`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
 
-### For Production
+The webhook verifies Stripe's signature. It maps the purchased Price ID to the
+central plan config, stores subscription status and period dates on the
+workspace, and applies the plan's monthly reply limit. Non-active subscription
+updates suspend the plan. Processing errors return a retryable server error;
+check the Stripe dashboard's webhook delivery log if a workspace does not
+update after checkout.
 
-1. Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
-2. Click **Add endpoint**
-3. **URL:** `https://yourdomain.com/api/webhooks/stripe`
-4. **Events to listen for:**
-   - ✅ `checkout.session.completed` — Payment succeeded
-   - ✅ `customer.subscription.updated` — Subscription changed
-   - ✅ `customer.subscription.deleted` — Subscription cancelled
-5. Click **Add endpoint**
-6. Copy the **Signing secret** and add to your production `.env`
+## Test checkout
 
----
+Use Stripe test mode and card `4242 4242 4242 4242`, any future expiration date,
+any CVC, and any postal code. Confirm the webhook delivery succeeds and the
+workspace plan is updated before testing public chat.
 
-## 6. How Billing Works in Agentix
+## Go live
 
-1. **User clicks "Upgrade"** in the billing page
-2. **Frontend calls** `POST /billing/checkout` → creates a Stripe Checkout Session
-3. **User is redirected** to Stripe to enter payment details
-4. **Stripe sends a webhook** (`checkout.session.completed`) to your server
-5. **Server upgrades** the workspace tier and tops up tokens
-6. **Each month,** Stripe sends `customer.subscription.updated` → tokens are refilled
-7. **If cancelled,** Stripe sends `customer.subscription.deleted` → tier removed, tokens set to 0
+Create the same products/prices in Stripe live mode, replace all test Price IDs,
+and configure the live secret key and live webhook signing secret in the
+production environment. Never commit live credentials to the repository.
 
----
-
-## 7. Testing Payments
-
-Use Stripe's test card numbers:
-
-| Card Number           | Result             |
-| --------------------- | ------------------ |
-| `4242 4242 4242 4242` | Success            |
-| `4000 0000 0000 0002` | Decline            |
-| `4000 0025 0000 3155` | Requires 3D Secure |
-
-- Use any future expiration date
-- Use any 3-digit CVC
-- Use any ZIP code
-
----
-
-## 8. Switching to Live Mode
-
-1. In Stripe Dashboard, toggle to **Live Mode**
-2. Create the same 3 products with real prices in Live Mode
-3. Copy the **Live Price IDs** and update `packages/config/pricing.ts`
-4. Copy the **Live Secret Key** and update `STRIPE_SECRET_KEY` in `.env`
-5. Create a new **Live webhook endpoint** and update `STRIPE_WEBHOOK_SECRET`
-6. Update `NEXT_PUBLIC_STRIPE_*` environment variables with live Price IDs
-7. Or use the **Admin Panel → Settings → Billing** to switch modes and update keys
-
----
-
-## 9. Troubleshooting
-
-| Problem                                  | Solution                                                                       |
-| ---------------------------------------- | ------------------------------------------------------------------------------ |
-| Checkout URL is blank                    | `STRIPE_SECRET_KEY` is missing or invalid                                      |
-| Payment succeeds but tier doesn't change | Webhook isn't reaching your server. Check Stripe Dashboard → Webhooks → Events |
-| Webhook returns 400 error                | `STRIPE_WEBHOOK_SECRET` doesn't match                                          |
-| Workspace not upgraded after payment     | Check the Price ID in `pricing.ts` matches Stripe exactly                      |
-| "Missing priceId" error in browser       | Set `NEXT_PUBLIC_STRIPE_PRO_PRICE_ID` in your `.env`                           |
-
----
-
-## 📞 Need Help?
-
-Refer to [Stripe's Documentation](https://stripe.com/docs) or contact Agentix support.
-
-```
-
----
-
-```
+Paddle remains an optional global checkout provider. Configure Paddle separately
+if enabled. Bangladesh annual packages use consultation, invoice, bank
+transfer, cash, or manual mobile payment and are assigned through
+**Admin → Subscribers**.

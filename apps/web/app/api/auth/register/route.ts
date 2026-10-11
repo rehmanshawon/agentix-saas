@@ -53,6 +53,7 @@ export async function POST(req: Request) {
         name: `${name || "My"} Workspace`,
         tokenBalance: DEMO_MODE ? DEMO_TOKENS : 0,
         subscriptionTier: DEMO_MODE ? DEMO_TIER : null,
+        monthlyReplyLimit: DEMO_MODE ? DEMO_TOKENS : null,
       },
     });
 

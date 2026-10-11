@@ -74,20 +74,14 @@ export default function AdminDashboardPage() {
   const [charts, setCharts] = useState<ChartData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "https://api.ilogicmagic.com";
+  const API_URL = "/api/backend";
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [statsRes, chartsRes] = await Promise.all([
-          fetch(`${API_URL}/api/admin/dashboard/stats`, {
-            headers: { "x-admin-key": ADMIN_PASSWORD },
-          }),
-          fetch(`${API_URL}/api/admin/dashboard/charts`, {
-            headers: { "x-admin-key": ADMIN_PASSWORD },
-          }),
+          fetch(`${API_URL}/api/admin/dashboard/stats`),
+          fetch(`${API_URL}/api/admin/dashboard/charts`),
         ]);
 
         if (statsRes.ok) setStats(await statsRes.json());
@@ -99,7 +93,7 @@ export default function AdminDashboardPage() {
       }
     };
     fetchData();
-  }, [API_URL, ADMIN_PASSWORD]);
+  }, [API_URL]);
 
   if (isLoading) {
     return (
