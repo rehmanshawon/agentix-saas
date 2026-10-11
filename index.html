@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agentix Local Chatbot Test</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        color: #172033;
+        background: #f3f5f9;
+      }
+
+      body {
+        margin: 0;
+        padding: 40px 20px;
+      }
+
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 32px;
+        background: white;
+        border: 1px solid #dce2ec;
+        border-radius: 16px;
+        box-shadow: 0 12px 36px rgb(23 32 51 / 8%);
+      }
+
+      h1 {
+        margin-top: 0;
+      }
+
+      p,
+      li {
+        line-height: 1.6;
+      }
+
+      form {
+        display: grid;
+        gap: 16px;
+        margin-top: 28px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      input {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid #bdc7d6;
+        border-radius: 8px;
+        font: inherit;
+      }
+
+      button {
+        justify-self: start;
+        padding: 11px 16px;
+        border: 0;
+        border-radius: 8px;
+        color: white;
+        background: #4f46e5;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #4338ca;
+      }
+
+      pre {
+        overflow-x: auto;
+        padding: 16px;
+        border-radius: 8px;
+        color: #e5e7eb;
+        background: #111827;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      #status {
+        min-height: 24px;
+        color: #374151;
+      }
+
+      .note {
+        padding: 12px 16px;
+        border-left: 4px solid #f59e0b;
+        background: #fffbeb;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Agentix local chatbot test</h1>
+      <p>
+        Enter the agent ID from <strong>Dashboard → Agent Builder</strong>.
+        This page loads the same widget script you will embed on your website.
+      </p>
+      <p class="note">
+        The widget makes public requests to the API. Keep this page local and
+        do not put admin credentials or private API secrets in it.
+      </p>
+
+      <form id="widget-form">
+        <label for="agent-id">
+          Agent ID
+          <input
+            id="agent-id"
+            name="agentId"
+            placeholder="Paste the agent ID from the Agent Builder"
+            required
+          />
+        </label>
+        <label for="widget-url">
+          Widget script URL
+          <input
+            id="widget-url"
+            name="widgetUrl"
+            type="url"
+            value="http://localhost:3000/widget.js"
+            required
+          />
+        </label>
+        <label for="api-url">
+          Public chat API URL
+          <input
+            id="api-url"
+            name="apiUrl"
+            type="url"
+            value="http://localhost:3001/api/chat"
+            required
+          />
+        </label>
+        <button type="submit">Load chatbot</button>
+      </form>
+
+      <p id="status" role="status" aria-live="polite"></p>
+      <h2>Embed snippet</h2>
+      <p>
+        Once it works here, copy this snippet into your own website. Keep the
+        widget and API URLs pointed at your deployed services outside local
+        testing.
+      </p>
+      <pre id="snippet">&lt;script&gt;Enter an agent ID to create the snippet.&lt;/script&gt;</pre>
+    </main>
+
+    <script>
+      const form = document.getElementById("widget-form");
+      const agentIdInput = document.getElementById("agent-id");
+      const widgetUrlInput = document.getElementById("widget-url");
+      const apiUrlInput = document.getElementById("api-url");
+      const status = document.getElementById("status");
+      const snippet = document.getElementById("snippet");
+
+      const escapeAttribute = (value) =>
+        value.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+
+      const updateSnippet = () => {
+        const agentId = agentIdInput.value.trim();
+        if (!agentId) {
+          snippet.textContent = "<script>Enter an agent ID to create the snippet.</script>";
+          return;
+        }
+
+        snippet.textContent =
+          `<script src="${escapeAttribute(widgetUrlInput.value.trim())}" ` +
+          `data-agent-id="${escapeAttribute(agentId)}" ` +
+          `data-api-url="${escapeAttribute(apiUrlInput.value.trim())}" defer><` +
+          "/script>";
+      };
+
+      [agentIdInput, widgetUrlInput, apiUrlInput].forEach((input) => {
+        input.addEventListener("input", updateSnippet);
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const agentId = agentIdInput.value.trim();
+
+        let widgetUrl;
+        let apiUrl;
+        try {
+          widgetUrl = new URL(widgetUrlInput.value);
+          apiUrl = new URL(apiUrlInput.value);
+          if (!["http:", "https:"].includes(widgetUrl.protocol)) {
+            throw new Error("The widget script URL must use HTTP or HTTPS.");
+          }
+          if (!["http:", "https:"].includes(apiUrl.protocol)) {
+            throw new Error("The API URL must use HTTP or HTTPS.");
+          }
+        } catch (error) {
+          status.textContent = error.message || "Enter valid widget and API URLs.";
+          return;
+        }
+
+        document
+          .getElementById("agentix-chat-widget-container")
+          ?.remove();
+        document.getElementById("agentix-local-widget-script")?.remove();
+
+        const script = document.createElement("script");
+        script.id = "agentix-local-widget-script";
+        script.src = widgetUrl.href;
+        script.dataset.agentId = agentId;
+        script.dataset.apiUrl = apiUrl.href.replace(/\/+$/, "");
+        script.onload = () => {
+          status.textContent =
+            "Widget script loaded. Open the chat bubble in the bottom-right corner.";
+        };
+        script.onerror = () => {
+          status.textContent =
+            "Could not load the widget script. Check the web app and script URL.";
+        };
+
+        status.textContent = "Loading widget…";
+        document.body.appendChild(script);
+        updateSnippet();
+      });
+    </script>
+  </body>
+</html>
