@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/Toast";
-import { SAAS_PRICING } from "@agentix/config/pricing";
+import { SAAS_PRICING, getTierName } from "@agentix/config/pricing";
 
 const SpinnerIcon = () => (
   <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -88,6 +88,8 @@ export default function BillingPage() {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [currentTier, setCurrentTier] = useState<string | null>(null);
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
+  const [billingProviderType, setBillingProviderType] = useState<string | null>(null);
+  const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">(
     "monthly",
   );
@@ -109,6 +111,8 @@ export default function BillingPage() {
         if (res.ok) {
           const { workspace } = await res.json();
           setCurrentTier(workspace?.subscriptionTier || null);
+          setBillingProviderType(workspace?.billingProvider || null);
+          setSubscriptionExpiresAt(workspace?.subscriptionExpiresAt || null);
           setTokenBalance(
             workspace?.usage?.aiRepliesRemaining ??
               workspace?.tokenBalance ??
@@ -120,6 +124,8 @@ export default function BillingPage() {
       } catch (error) {
         console.error("Failed to load workspace details:", error);
         setCurrentTier(null);
+        setBillingProviderType(null);
+        setSubscriptionExpiresAt(null);
         setTokenBalance(null);
       } finally {
         setIsLoadingWorkspace(false);
@@ -215,7 +221,7 @@ export default function BillingPage() {
             className={`w-2 h-2 rounded-full ${currentTier ? "bg-emerald-500 animate-pulse" : "bg-gray-400"}`}
           />
           Current plan:{" "}
-          <span className="font-bold">{currentTier || "No Plan"}</span>
+          <span className="font-bold">{getTierName(currentTier)}</span>
           {tokenBalance !== null && currentTier && (
             <>
               <span className="text-indigo-300">|</span>
@@ -223,6 +229,21 @@ export default function BillingPage() {
             </>
           )}
         </div>
+        {currentTier && (currentTier.startsWith("BD_") || billingProviderType === "manual") && (
+          <div className="mt-4 p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-950 text-left max-w-xl mx-auto text-sm">
+            <p className="font-semibold flex items-center gap-2">
+              <span className="text-emerald-600">✓</span> Managed Annual Service Account
+            </p>
+            <p className="mt-1 text-xs text-emerald-800">
+              Your assistant is maintained under an annual service agreement. Document training and content updates are handled for you.
+              {subscriptionExpiresAt && (
+                <span className="block mt-1 font-medium text-emerald-900">
+                  Annual term active through: {new Date(subscriptionExpiresAt).toLocaleDateString()}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
         {!currentTier && (
           <p className="text-xs text-gray-500 mt-2">
             Subscribe to a plan to enable AI chat features.

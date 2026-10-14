@@ -75,6 +75,9 @@ export default async function HomePage() {
             <Link href="/bd" className="hover:text-slate-950">
               Bangladesh
             </Link>
+            <Link href="/contact" className="hover:text-slate-950">
+              Contact
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
             <Link

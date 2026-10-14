@@ -1,150 +1,101 @@
 # Agentix Transformation Plan
 
-Last updated: 2026-10-12
+Last updated: 2026-10-14
 
 ## 1. Current Architecture Summary
 
-Agentix is a pnpm monorepo with:
+Agentix is a full-featured monorepo with:
+- **`apps/web`**: Next.js 14 App Router application handling public marketing pages (`/`, `/pricing`, `/bd`, `/demo`, `/contact`), user authentication (NextAuth), customer dashboard (`/dashboard`, `/dashboard/knowledge`, `/dashboard/builder`, `/dashboard/billing`), admin portal (`/admin`, `/admin/subscribers`), and webhook endpoints (`/api/webhooks/stripe`, `/api/webhooks/paddle`).
+- **`apps/api`**: NestJS 10 backend providing document ingestion, PDF parsing, Pinecone vector storage, DeepSeek V4 Flash default chat completion with OpenAI fallback, atomic monthly reply tracking, and admin management endpoints.
+- **`apps/widget`**: Standalone Vite-built Shadow DOM chat embed (`apps/web/public/widget.js`).
+- **`packages/database`**: Prisma schema configured with MySQL multi-tenant models (`Workspace`, `WorkspaceMember`, `User`, `Agent`, `Document`, `WorkspaceMonthlyUsage`).
+- **`packages/config`**: Centralized pricing, tier configurations, and reply/document limits for both global Stripe plans and Bangladesh managed service plans.
 
-- Next.js web app in `apps/web`.
-- NestJS API in `apps/api`.
-- Vanilla JS embeddable widget in `apps/widget`.
-- Prisma/MySQL data layer in `packages/database`.
-- Shared pricing config in `packages/config`.
+---
 
-The core SaaS flow already exists: customers sign up, get a workspace, upload documents, vectorize them into Pinecone, configure an agent, copy an embed script, and public visitors chat with that agent. Stripe checkout and webhooks set subscription tier and reply credit balance.
+## 2. Identified Gaps & Target Enhancements
 
-## 2. Existing Issues and Gaps
+1. **Manual Client Creation in Admin Panel**:
+   - *Current state*: Admin can edit existing workspaces (`PATCH /api/admin/workspaces/:id`), but there is no API endpoint or UI form to manually onboard a new client from scratch.
+   - *Requirement*: Local Bangladesh clients pay manually (bank transfer, cash, etc.) and need admin creation of customer accounts, workspaces, plan assignment, expiry dates, monthly caps, and notes.
+2. **Subdomain Routing & Route Parity**:
+   - *Current state*: Routes exist under `/`, `/pricing`, `/bd`, `/demo`, but `/contact` and `/app` are missing. Subdomain host rewriting (`bd.agentix.ilogicmagic.com`, `demo.agentix.ilogicmagic.com`, `app.agentix.ilogicmagic.com`) is not handled in Next.js middleware.
+   - *Requirement*: Add `apps/web/middleware.ts` for clean host routing alongside route-based equivalents (`/app`, `/contact`, `/bd`, `/demo`).
+3. **Admin Expiration & Status Controls**:
+   - *Current state*: Chat endpoint checks expiry, but admin needs quick visibility, expiration warnings, and one-click toggle to disable/enable an account.
+4. **Billing UI Alignment**:
+   - *Current state*: Billing page displays Stripe plans well, but if an account has a manual or Bangladesh plan (`BD_BASIC`, `BD_STANDARD`, `BD_INSTITUTIONAL`), it should clearly display their managed plan name, annual term, and monthly reply allocation instead of treating it as "No Plan" or an unrecognized string.
+5. **Contact Page & Lead Capture**:
+   - *Current state*: CTAs link to `mailto:hello@ilogicmagic.com`. Having a dedicated `/contact` page with a consultation form improves conversion for both enterprise global leads and local Bangladesh businesses.
 
-- The marketing flow now uses SaaS product positioning rather than source-code sales.
-- Shared pricing config includes the requested USD monthly/yearly prices and capped BDT service packages; billing now supports configured monthly and yearly checkout.
-- DeepSeek is the default chat provider with OpenAI fallback; OpenAI remains required for embeddings.
-- `WorkspaceMonthlyUsage` and manual subscription fields are schema-backed, and administrators can edit existing workspaces' plans, dates, status, monthly limits, and notes.
-- Legacy `tokenBalance` is still decremented as a second usage gate and is refilled to the plan limit on the first request in a new calendar month.
-- The admin subscriber editor cannot create a user/workspace for a new client.
-- Failed chat generations now return errors and are not counted as successful replies.
-- Stripe/Paddle webhook processing failures return server errors so providers can retry.
-- Private API authorization now uses an internal server-to-server token and a Next.js proxy that derives customer email from NextAuth. Admin login uses a signed HttpOnly cookie and server-side credentials.
-- Uploads now validate PDF/TXT type and size, and document deletion removes associated Pinecone vectors.
-- Chat logs no longer include user message content.
-- Stripe/Paddle production credentials, price IDs, webhook secrets, merchant approval, and DNS/subdomain routing still require setup.
+---
 
 ## 3. Files Likely to Change
 
-Phase 1 and 2 changes:
+- `apps/api/src/admin/admin.controller.ts`: Add `POST /api/admin/workspaces` for creating manual customer workspaces with user accounts, initial agents, plans, and notes.
+- `apps/web/app/admin/subscribers/page.tsx`: Add "Add Client / Tenant" modal dialog and quick status toggle.
+- `apps/web/middleware.ts`: Add Next.js host header routing for `bd.*`, `demo.*`, and `app.*` subdomains.
+- `apps/web/app/app/page.tsx`: Route redirecting `/app` to `/dashboard`.
+- `apps/web/app/contact/page.tsx`: Contact / Consultation request page for local and global custom clients.
+- `apps/web/app/dashboard/billing/page.tsx`: Support displaying Bangladesh/manual service tier names and statuses cleanly.
+- `apps/web/components/Navbar.tsx`: Update navigation links to include Contact and Bangladesh options cleanly.
+- `packages/config/pricing.ts`: Verify plan limits and helper functions (`isLocalPlan`, etc.).
+- `README.md`, `DEPLOYMENT.md`, `.env.example`: Update documentation with full subdomain setup, DeepSeek V4 Flash config, and manual client administration instructions.
 
-- `packages/config/pricing.ts`
-- `apps/web/app/page.tsx`
-- `apps/web/app/pricing/page.tsx`
-- `apps/web/app/bd/page.tsx`
-- `apps/web/app/demo/page.tsx`
-- `apps/web/app/dashboard/billing/page.tsx`
-- `apps/web/app/dashboard/builder/page.tsx`
-- `apps/web/app/dashboard/page.tsx`
-- `apps/web/app/sitemap.ts`
-- `apps/api/src/ai/*`
-- `apps/api/src/chat/chat.controller.ts`
-- `apps/api/src/knowledge/knowledge.controller.ts`
-- `apps/api/src/workspace/workspace.controller.ts`
-- `apps/api/src/main.ts`
-- `.env.example`
-- `README.md`
-- `docs/AGENTIX_CODEBASE_AUDIT.md`
-- `docs/AGENTIX_TRANSFORMATION_PLAN.md`
+---
 
-Later phases may require:
+## 4. Implementation Phases
 
-- `packages/database/schema.prisma`
-- `apps/api/src/admin/admin.controller.ts`
-- `apps/web/app/admin/subscribers/page.tsx`
-- `apps/web/app/admin/settings/page.tsx`
-- Stripe setup/deployment docs.
+### Phase 1: Routing, Subdomain Architecture & Public Pages
+- Implement Next.js `middleware.ts` to support subdomain mapping (`bd.*`, `app.*`, `demo.*`).
+- Add `/app` route redirecting to dashboard/login.
+- Add `/contact` page with clear forms for global inquiries and Bangladesh consultation requests.
+- Ensure all navigation bars and footers provide cohesive links.
 
-## 4. Proposed Implementation Phases
+### Phase 2: AI Provider & Model Router Verification
+- Validate `ModelRouter`, `ChatCompletionService`, and `EmbeddingService`.
+- Verify DeepSeek V4 Flash (`deepseek-v4-flash`) is the primary chat model.
+- Verify OpenAI fallback (`gpt-4o-mini`) triggers seamlessly on error.
+- Verify environment documentation for `DEEPSEEK_*` and `OPENAI_*`.
 
-### Phase 1: Product Repositioning and Main Flow Cleanup
+### Phase 3: Admin Manual Client & Tenant Management
+- Add `POST /api/admin/workspaces` in NestJS `AdminController` to create:
+  - User record (with email, name, hashed password)
+  - Workspace record (with subscription tier, status, annual start/end dates, monthly reply limit, payment notes)
+  - WorkspaceMember (OWNER role)
+  - Default Agent (ready for embedding)
+- Build "Add Client" modal in `apps/web/app/admin/subscribers/page.tsx`.
+- Enhance workspace table with status badges (Active, Manual, Expired, Canceled) and expiry countdowns.
 
-- Replace Gumroad/source-code landing copy with global SaaS positioning.
-- Remove Gumroad CTAs from the main journey.
-- Add `/pricing` with global SaaS plans and Bangladesh local annual packages.
-- Add `/bd` for the local done-for-you Bangladesh service.
-- Add `/demo` that does not redirect to Gumroad.
-- Update dashboard billing language from tokens to AI replies.
-- Keep Stripe checkout for global self-service plans.
+### Phase 4: Usage Limits, Billing Display & Final Polish
+- Ensure customer dashboard and billing page display managed Bangladesh plans correctly with their respective monthly reply quotas.
+- Verify atomic reply counter in `ChatController`.
+- Run full typecheck and production build.
+- Update `README.md` and deployment documentation.
 
-### Phase 2: AI Provider Abstraction
+---
 
-- Add a lightweight provider router for chat completion.
-- Make DeepSeek the default chat provider through environment variables.
-- Keep OpenAI as fallback.
-- Keep OpenAI embeddings for RAG unless another embedding provider is added later.
-- Hide model names from normal customer UI.
-- Document `DEEPSEEK_*` and OpenAI fallback variables.
+## 5. Risks & Mitigations
 
-### Phase 3: Usage Limits and Manual Local Clients
+1. **Prisma User / Workspace Relations**:
+   - *Risk*: Creating a workspace with an existing email could conflict or duplicate accounts.
+   - *Mitigation*: Look up existing `User` by email; if found, link to a new or existing workspace; if not found, create new `User` with secure temporary password.
+2. **Subdomain Routing in Local Development vs Production**:
+   - *Risk*: `host` headers differ between localhost and production domains.
+   - *Mitigation*: Support both subdomain matching (e.g., `bd.agentix.ilogicmagic.com`) and path-based URLs (`/bd`, `/demo`, `/pricing`, `/contact`) so development and production work identically.
+3. **Database Schema Constraints**:
+   - *Risk*: Incompatible schema updates.
+   - *Mitigation*: The database schema already includes all necessary fields (`subscriptionTier`, `subscriptionStatus`, `billingProvider`, `subscriptionStartDate`, `subscriptionExpiresAt`, `subscriptionNotes`, `monthlyReplyLimit`, `tokenBalance`). No destructive Prisma migrations required.
 
-- Centralize plan limits in `packages/config`.
-- Use the monthly usage table as the source of truth for calendar-month reply limits while keeping the legacy balance synchronized for compatibility.
-- Keep admin controls for manual local clients:
-  - local/manual plan type
-  - annual start/end date
-  - monthly reply limit
-  - payment/agreement notes
-  - active/inactive/expired status
-- Add admin user/workspace creation if it can be done without exposing admin credentials.
-- Surface reply usage on the customer dashboard.
-
-### Phase 4: Deployment, Demo, Embed, and Polish
-
-- Document subdomain mapping:
-  - `agentix.ilogicmagic.com`
-  - `app.agentix.ilogicmagic.com`
-  - `demo.agentix.ilogicmagic.com`
-  - `bd.agentix.ilogicmagic.com`
-- Keep the scripted public demo clearly identified, or connect it to a configured demo agent when a safe demo workspace is available.
-- Improve embed onboarding and checklist copy.
-- Add SEO metadata for new public pages.
-- Keep the private API proxy, internal-token guard, and public widget route allowlist covered by regression checks.
-- Keep upload validation, vector deletion, and privacy-safe logging covered by regression checks.
-
-## 5. Risks
-
-- Changing database schema for manual annual plans requires Prisma migration/deploy coordination.
-- Existing workspaces may use legacy `ENTERPRISE` tier values, so pricing changes should preserve compatibility.
-- DeepSeek does not provide the same embedding API as OpenAI in the current code, so embeddings should remain OpenAI-based until an embedding alternative is selected.
-- Stripe yearly prices need real Stripe price IDs before production checkout can support annual billing.
-- The server-to-server API secret and admin password must be configured consistently across web and API deployments.
+---
 
 ## 6. Exact Next Steps
 
-1. Exercise manual-plan monthly renewal and reply-limit behavior at calendar boundaries and under concurrent requests.
-2. Configure production monthly/yearly Stripe prices and verify checkout/webhook delivery; configure Paddle only if enabled.
-3. Configure high-entropy `API_INTERNAL_SECRET` and `ADMIN_PASSWORD` values for production web/API services.
-4. Decide whether a live demo agent and direct admin customer/workspace creation are required for launch.
-5. Configure DNS and host-level routing for any desired subdomains.
-
-## 7. Implementation Status Before This Pass
-
-Completed:
-
-- Phase 1 public repositioning for `/`, `/pricing`, `/demo`, and `/bd`.
-- Gumroad removed from the main user journey.
-- Global SaaS and Bangladesh local service pricing centralized in `packages/config/pricing.ts`.
-- Dashboard billing copy now uses AI replies instead of tokens.
-- Customer builder UI no longer exposes OpenAI model names.
-- DeepSeek/OpenAI chat provider router added, with DeepSeek as default and OpenAI fallback.
-- OpenAI embeddings preserved for the current Pinecone RAG pipeline.
-- README and `.env.example` updated for the new product direction and provider setup.
-- Paddle checkout module, checkout page, and signed webhook handler added.
-- Prisma validation, web/API typecheck, and the full API/web/widget production build pass.
-
-Still pending:
-
-- Manual-plan usage boundary/concurrency verification.
-- Production configuration of monthly/yearly payment price IDs and webhook secrets.
-- Admin customer/workspace creation and live demo setup.
-- Production configuration of the internal API secret and admin password; end-to-end verification against configured payment and AI services.
-
-## 8. Current Implementation Pass
-
-The worktree already contains schema-backed manual subscription fields, per-workspace monthly reply usage, admin editing for local annual clients, non-active subscription handling, the SaaS/local marketing pages, and DeepSeek/OpenAI routing. Private API and admin authorization have now been moved behind the authenticated Next.js proxy; preserve the existing work and run final validation.
+1. Create `apps/web/middleware.ts` for host-based subdomain routing.
+2. Create `apps/web/app/app/page.tsx` and `apps/web/app/contact/page.tsx`.
+3. Update `packages/config/pricing.ts` helper methods if needed.
+4. Add `POST /api/admin/workspaces` to `apps/api/src/admin/admin.controller.ts`.
+5. Update `apps/web/app/admin/subscribers/page.tsx` with the Client Creation Modal.
+6. Refine `apps/web/app/dashboard/billing/page.tsx` for manual plan recognition.
+7. Run `OPENSSL_CONF=/dev/null corepack pnpm run typecheck` and `build`.
+8. Update `README.md`, `DEPLOYMENT.md`, and `.env.example`.

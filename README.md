@@ -1,200 +1,167 @@
 # Agentix SaaS
 
-Agentix is an AI chatbot SaaS for small businesses. Customers upload business
-PDFs/documents, train an assistant, copy an embeddable script, and add a 24/7
-AI chatbot to their website.
+Agentix is an AI chatbot SaaS for businesses and institutions worldwide. Customers upload company documents (PDF/TXT), train an assistant using vector RAG, copy an embeddable script tag, and install a 24/7 AI chatbot on their website in minutes.
 
-Production direction:
+The platform is designed with two distinct market models under **iLogic Magic** (`www.ilogicmagic.com`):
 
-- Global self-service SaaS: `agentix.ilogicmagic.com`
-- SaaS app dashboard: `app.agentix.ilogicmagic.com` when deployment supports it
-- Public demo: `demo.agentix.ilogicmagic.com` or `/demo`
-- Bangladesh managed service: `bd.agentix.ilogicmagic.com` or `/bd`
+1. **Global Self-Service SaaS** (`agentix.ilogicmagic.com`):
+   - Fast, affordable self-service chatbot builder for global small businesses (e-commerce, coaching, clinics, agencies).
+   - Stripe card checkout in USD.
+   - Core proposition: *“Upload your business PDFs, train your AI chatbot, and embed it on your website in 3 clicks.”*
+2. **Bangladesh Done-For-You Managed Service** (`bd.agentix.ilogicmagic.com` / `/bd`):
+   - Annual turnkey setup, document training, embed installation, and maintenance for local businesses and institutions (Universities, Coaching centers, Clinics, Agencies, E-commerce).
+   - Manual consultation, formal agreement, bank transfer, invoice, cash, or manual mobile payment (no international card or Stripe required).
+   - Core proposition: *“We install a 24/7 AI assistant on your website, train it with your documents, and maintain it for one full year.”*
 
-## Current Stack
+---
 
-- `apps/web`: Next.js 14 dashboard, auth, marketing pages, admin, Stripe/Paddle webhooks
-- `apps/api`: NestJS API for chat, knowledge uploads, RAG, billing, admin
-- `apps/widget`: Vanilla JS embeddable widget built with Vite
-- `packages/database`: Prisma schema/client for MySQL
-- `packages/config`: Shared pricing and plan limits
+## Architecture & Monorepo Structure
 
-## Product Routes
+```
+agentix-saas/
+├── apps/
+│   ├── web/           # Next.js 14 App Router (Marketing, Auth, Dashboards, Webhooks, Next.js API proxy)
+│   ├── api/           # NestJS 10 REST API (Chat, RAG, Knowledge, AI router, Billing, Admin)
+│   └── widget/        # Vanilla JS shadow-DOM embeddable chatbot widget (Vite build -> apps/web/public/widget.js)
+├── packages/
+│   ├── database/      # Prisma schema (MySQL) and generated client
+│   └── config/        # Shared pricing, tier definitions, limits, and helper methods
+├── docs/              # AGENTIX_CODEBASE_AUDIT.md and AGENTIX_TRANSFORMATION_PLAN.md
+└── docker-compose.yml # Local MySQL (3306/3307) and Redis (6379)
+```
 
+---
+
+## Routing & Subdomain Architecture
+
+Next.js middleware (`apps/web/middleware.ts`) automatically rewrites incoming subdomain traffic while preserving direct path equivalents:
+
+| Host / Subdomain | Target Route | Purpose |
+| :--- | :--- | :--- |
+| `agentix.ilogicmagic.com` | `/` | Global SaaS marketing landing page |
+| `app.agentix.ilogicmagic.com` | `/app` &rarr; `/dashboard` | SaaS web application & dashboard |
+| `demo.agentix.ilogicmagic.com` | `/demo` | Interactive public chatbot demo |
+| `bd.agentix.ilogicmagic.com` | `/bd` | Bangladesh done-for-you managed service |
+
+### Public Routes
 - `/`: Global SaaS landing page
-- `/pricing`: Global Stripe plans and Bangladesh annual service packages
-- `/demo`: Public scripted FAQ demo (a live demo workspace is not configured yet)
-- `/bd`: Bangladesh done-for-you service page
-- `/dashboard`: Customer app
-- `/dashboard/knowledge`: Upload and train documents
-- `/dashboard/builder`: Configure chatbot and copy embed snippet
-- `/dashboard/billing`: Monthly/yearly Stripe or Paddle subscription plans
-- `/admin`: Admin dashboard
+- `/pricing`: Dual pricing overview (Global Stripe USD plans + Bangladesh BDT annual packages)
+- `/bd`: Bangladesh managed service page with consultation CTAs
+- `/demo`: Interactive chatbot preview (no Gumroad redirects)
+- `/contact`: Direct consultation and inquiry form for custom/enterprise and local BD clients
+- `/app`: Convenience entry point redirecting to `/dashboard` (or `/login`)
 
-## Pricing Model
+### Authenticated Customer Dashboard
+- `/dashboard`: Control center displaying onboarding progress and monthly reply usage
+- `/dashboard/knowledge`: Drag-and-drop PDF and TXT document upload with vector indexing
+- `/dashboard/builder`: Agent customization (name, prompt, brand color) and embed snippet generator
+- `/dashboard/billing`: Subscription plans, current usage, and Stripe checkout
 
-Global self-service plans are configured in `packages/config/pricing.ts`:
+### Admin Dashboard (`/admin`)
+- `/admin`: Analytics and MRR dashboard
+- `/admin/subscribers`: Full client management with **Add Client / Tenant** modal, plan assignment, expiry controls, status toggling, and reply overrides
+- `/admin/analytics`, `/admin/settings`, `/admin/integrations`: System administration
 
-- Starter: `$7/month`, `$69/year`, 1 chatbot, 1,000 AI replies/month
-- Growth: `$15/month`, `$149/year`, 3 chatbots, 5,000 AI replies/month
-- Business: `$29/month`, `$299/year`, 10 chatbots, 15,000 AI replies/month
+---
 
-Bangladesh annual packages are also configured there and use manual
-consultation/payment, not Stripe. Never sell unlimited AI usage; use reply,
-chatbot, document, and storage caps.
+## Pricing & Plan Caps
 
-## AI Provider Configuration
+Every plan includes strict caps — never unlimited AI usage:
 
-DeepSeek is the default chat provider. OpenAI remains configured as fallback and
-is still used for the current embedding pipeline.
+### A. Global SaaS (Stripe / USD)
+- **Starter**: `$7/month` or `$69/year` | 1 chatbot | 1,000 AI replies/mo | 5 docs | Agentix branding
+- **Growth**: `$15/month` or `$149/year` | 3 chatbots | 5,000 AI replies/mo | 25 docs | Basic customization
+- **Business**: `$29/month` or `$299/year` | 10 chatbots | 15,000 AI replies/mo | 75 docs | Branding removal & priority support
 
-Required AI variables:
+### B. Bangladesh Annual Managed Service (BDT / Invoicing)
+- **Basic AI Assistant**: `৳30,000–৳45,000/year` | 1 chatbot | 1,500 AI replies/mo | 10 docs | Website installation, document training, basic annual maintenance
+- **Standard AI Assistant**: `৳60,000–৳90,000/year` | 3 chatbots | 5,000 AI replies/mo | 30 docs | Installation, monthly content updates, lead capture, dashboard access
+- **Institutional AI Desk**: `৳120,000–৳250,000/year` | 10 chatbots | 15,000 AI replies/mo | 100 docs | Universities, coaching centers, agencies, priority maintenance
+
+---
+
+## AI Model Provider & Routing
+
+- **Default Provider**: **DeepSeek V4 Flash** (`deepseek-v4-flash`). Selected for superior speed, cost efficiency, and accuracy.
+- **Automatic Fallback Provider**: **OpenAI** (`gpt-4o-mini`). Triggers automatically if DeepSeek returns an error or times out.
+- **Embedding Provider**: **OpenAI** (`text-embedding-3-small`). Vector dimensions match the Pinecone index.
+- **Customer Privacy**: Model names and token mechanics are concealed from customers; the UI displays "Platform default" and business-facing AI reply counts.
+
+### Environment Variables
 
 ```bash
+# Provider routing
 DEFAULT_AI_PROVIDER=deepseek
 FALLBACK_AI_PROVIDER=openai
-DEEPSEEK_API_KEY=...
+
+# DeepSeek (Default chat model)
+DEEPSEEK_API_KEY=your-deepseek-api-key
 DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
 DEEPSEEK_CHAT_MODEL=deepseek-v4-flash
-OPENAI_API_KEY=sk-...
+
+# OpenAI (Fallback chat model + Pinecone embeddings)
+OPENAI_API_KEY=your-openai-api-key
 OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_FALLBACK_MODEL=gpt-4o-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+
+# Vector DB
+PINECONE_API_KEY=your-pinecone-api-key
+PINECONE_INDEX_NAME=agentix-index
+
+# Database
+DATABASE_URL="mysql://root:password@127.0.0.1:3307/agentix"
+
+# Security & Admin
+API_INTERNAL_SECRET=generate-a-random-secret
+ADMIN_PASSWORD=replace-with-a-strong-password
+NEXTAUTH_SECRET=generate-a-random-secret
+NEXTAUTH_URL=https://agentix.ilogicmagic.com
 ```
 
-Provider names are not exposed to normal customers. The dashboard presents
-business-facing limits such as AI replies, chatbots, and documents.
+---
 
-## Local Development
+## Admin Client & Tenant Management
+
+Local Bangladesh clients and manual enterprise accounts are managed directly from `/admin/subscribers`:
+
+1. Click **+ Add Client / Tenant**.
+2. Enter the client's email, business name, and optional password (auto-generated if omitted).
+3. Select their plan (`BD_BASIC`, `BD_STANDARD`, `BD_INSTITUTIONAL`, `STARTER`, `GROWTH`, `ENTERPRISE`).
+4. Set the annual start date and expiry date (use the quick **+1 Year** preset).
+5. Specify the monthly AI reply cap and add agreement/payment notes (e.g. *"INV-1024, Bank Transfer BDT 60,000"*).
+6. The client workspace, user account, and default agent are created immediately.
+7. Use the **Expire** / **Activate** button to immediately manage access if an agreement expires.
+
+---
+
+## Local Development & Verification
 
 ```bash
+# 1. Install dependencies
 corepack pnpm install
-if [ ! -f .env ]; then cp .env.example .env; fi
+
+# 2. Database setup
 docker compose up -d
 corepack pnpm db:push
 corepack pnpm db:generate
+
+# 3. Typecheck
+OPENSSL_CONF=/dev/null corepack pnpm run typecheck
+
+# 4. Production build
+OPENSSL_CONF=/dev/null corepack pnpm run build
+
+# 5. Start development
 corepack pnpm dev
 ```
 
-For local work, `.env` should use the Docker Compose MySQL URL on port `3307`.
-Set a random `API_INTERNAL_SECRET` and a strong `ADMIN_PASSWORD` in both the
-root `.env` and `apps/web/.env.local`; also set `API_URL` to
-`http://localhost:3001` in the web environment. The web environment needs
-`DATABASE_URL`, `NEXTAUTH_URL=http://localhost:3000`, `NEXTAUTH_SECRET`, and
-`NEXT_PUBLIC_API_URL=http://localhost:3001` as well. Do not commit either
-environment file.
+---
 
-Default local URLs:
+## Detailed Documentation
 
-- Web: `http://localhost:3000`
-- API: `http://localhost:3001`
-- API docs: `http://localhost:3001/api/docs`
-
-### Local end-to-end widget test
-
-After configuring the required server environment variables in the root
-`.env` and `apps/web/.env.local`, start the local services with
-`corepack pnpm dev`. The root test page at `index.html` can then load your
-configured widget against `http://localhost:3001/api/chat`. Serve the
-repository root in a separate terminal with:
-
-```bash
-python3 -m http.server 8080 --bind 127.0.0.1
-```
-
-Open `http://localhost:8080/`, paste the agent ID from the Agent Builder, and
-select **Load chatbot**. See `DEPLOYMENT.md` for the required `API_URL`,
-`API_INTERNAL_SECRET`, `ADMIN_PASSWORD`, and NextAuth configuration.
-
-## Stripe Setup
-
-Set Stripe keys and price IDs in `.env`:
-
-```bash
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-NEXT_PUBLIC_STRIPE_STARTER_MONTHLY_PRICE_ID=price_...
-NEXT_PUBLIC_STRIPE_STARTER_YEARLY_PRICE_ID=price_...
-NEXT_PUBLIC_STRIPE_GROWTH_MONTHLY_PRICE_ID=price_...
-NEXT_PUBLIC_STRIPE_GROWTH_YEARLY_PRICE_ID=price_...
-NEXT_PUBLIC_STRIPE_BUSINESS_MONTHLY_PRICE_ID=price_...
-NEXT_PUBLIC_STRIPE_BUSINESS_YEARLY_PRICE_ID=price_...
-```
-
-The webhook at `/api/webhooks/stripe` maps monthly or yearly price IDs to the
-same plan limits. `WorkspaceMonthlyUsage` records replies by calendar month;
-the legacy `Workspace.tokenBalance` is also maintained and refilled when a
-workspace begins using the service in a new month.
-
-## Paddle Setup
-
-Paddle can be used as the global card checkout provider when Stripe is not
-available for your business location. Set:
-
-```bash
-NEXT_PUBLIC_BILLING_PROVIDER=paddle
-PADDLE_ENVIRONMENT=sandbox
-PADDLE_API_KEY=pdl_...
-PADDLE_WEBHOOK_SECRET=...
-PADDLE_CHECKOUT_BASE_URL=https://agentix.ilogicmagic.com/checkout/paddle
-NEXT_PUBLIC_PADDLE_ENVIRONMENT=sandbox
-NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=live_...
-NEXT_PUBLIC_PADDLE_STARTER_MONTHLY_PRICE_ID=pri_...
-NEXT_PUBLIC_PADDLE_STARTER_YEARLY_PRICE_ID=pri_...
-NEXT_PUBLIC_PADDLE_GROWTH_MONTHLY_PRICE_ID=pri_...
-NEXT_PUBLIC_PADDLE_GROWTH_YEARLY_PRICE_ID=pri_...
-NEXT_PUBLIC_PADDLE_BUSINESS_MONTHLY_PRICE_ID=pri_...
-NEXT_PUBLIC_PADDLE_BUSINESS_YEARLY_PRICE_ID=pri_...
-```
-
-Paddle webhooks should point to:
-
-```text
-https://agentix.ilogicmagic.com/api/webhooks/paddle
-```
-
-The Paddle checkout page is:
-
-```text
-/checkout/paddle
-```
-
-Paddle must approve the checkout domain/payment link before live checkout works.
-Webhook activation updates the workspace plan. Monthly reply caps are tracked
-by calendar month, regardless of whether checkout renews monthly or yearly.
-
-## Subdomain Deployment Notes
-
-If the host supports subdomain routing, map:
-
-- `agentix.ilogicmagic.com` to the marketing web app `/`
-- `app.agentix.ilogicmagic.com` to the same app, with dashboard/login links
-- `demo.agentix.ilogicmagic.com` to `/demo`
-- `bd.agentix.ilogicmagic.com` to `/bd`
-
-Until subdomain routing is configured, the route-based structure works:
-
-- `/`
-- `/pricing`
-- `/demo`
-- `/bd`
-- `/dashboard`
-
-## Important Audits and Plan
-
-- `docs/AGENTIX_CODEBASE_AUDIT.md`
-- `docs/AGENTIX_TRANSFORMATION_PLAN.md`
-
-## Known Limitations
-
-- Admins can assign manual plans to existing workspaces; creating a user and
-  workspace directly from the admin UI is not yet supported.
-- Private dashboard and admin API calls pass through a server-side authenticated
-  proxy; the API requires a shared internal secret for non-public endpoints.
-  Configure `API_INTERNAL_SECRET`, `API_URL`, `ADMIN_PASSWORD`, and the
-  NextAuth secrets as described in `DEPLOYMENT.md`.
-
-Manual annual client fields are stored on `Workspace` and managed from the
-admin subscriber editor. Set a `BD_*` tier, `billingProvider=manual`, annual
-dates, a monthly reply override, and notes for a local client. Expired
-workspaces are blocked from public chat by the API.
+- [Codebase Audit](docs/AGENTIX_CODEBASE_AUDIT.md)
+- [Transformation Plan](docs/AGENTIX_TRANSFORMATION_PLAN.md)
+- [Deployment Guide](DEPLOYMENT.md)
+- [Stripe Setup](STRIPE_SETUP.md)
+- [Admin Guide](ADMIN_GUIDE.md)

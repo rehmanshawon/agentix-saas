@@ -19,6 +19,7 @@ import {
   LOCAL_SERVICE_PLANS,
   SAAS_PRICING,
 } from "@agentix/config/pricing";
+import { hash } from "bcryptjs";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 
@@ -281,6 +282,212 @@ export class AdminController {
         };
       }),
     };
+  }
+
+  @Post("workspaces")
+  async createWorkspace(
+    @Headers("x-admin-key") adminKey: string,
+    @Body()
+    body: {
+      email: string;
+      name?: string;
+      password?: string;
+      subscriptionTier?: string | null;
+      subscriptionStatus?: string | null;
+      billingProvider?: string | null;
+      subscriptionStartDate?: string | null;
+      subscriptionExpiresAt?: string | null;
+      subscriptionNotes?: string | null;
+      monthlyReplyLimit?: number | null;
+    },
+  ) {
+    this.validateAdmin(adminKey);
+
+    if (
+      !body.email ||
+      typeof body.email !== "string" ||
+      !body.email.includes("@")
+    ) {
+      throw new HttpException(
+        "A valid client email is required.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const email = body.email.trim().toLowerCase();
+    const validTiers = new Set([
+      ...Object.keys(SAAS_PRICING),
+      ...LOCAL_SERVICE_PLANS.map((plan) => plan.id),
+    ]);
+
+    const tier =
+      body.subscriptionTier && body.subscriptionTier !== "none"
+        ? body.subscriptionTier
+        : null;
+
+    if (tier && !validTiers.has(tier)) {
+      throw new HttpException(
+        "Invalid subscription plan.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const status = body.subscriptionStatus || "active";
+    if (
+      !["active", "manual", "past_due", "canceled", "expired"].includes(status)
+    ) {
+      throw new HttpException(
+        "Invalid subscription status.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const billingProvider = body.billingProvider || "manual";
+    if (!["stripe", "paddle", "manual"].includes(billingProvider)) {
+      throw new HttpException(
+        "Invalid billing provider.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const startDate = body.subscriptionStartDate
+      ? this.parseSubscriptionDate(
+          body.subscriptionStartDate,
+          "Subscription start date",
+        )
+      : new Date();
+
+    let expiresAt: Date | null = null;
+    if (body.subscriptionExpiresAt) {
+      expiresAt = this.parseSubscriptionDate(
+        body.subscriptionExpiresAt,
+        "Subscription expiry date",
+        true,
+      );
+    } else if (
+      tier &&
+      (tier.startsWith("BD_") || billingProvider === "manual")
+    ) {
+      // Default to 1 year for annual manual/BD subscriptions
+      expiresAt = new Date(startDate || new Date());
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    }
+
+    const tierLimits = getTierLimits(tier);
+    const replyLimit =
+      body.monthlyReplyLimit !== undefined && body.monthlyReplyLimit !== null
+        ? body.monthlyReplyLimit
+        : tierLimits.maxMessagesPerMonth;
+
+    if (replyLimit < 0) {
+      throw new HttpException(
+        "Monthly reply limit must be non-negative.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // 1. Find or create user
+    let user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    const clientPassword =
+      body.password?.trim() ||
+      `Agentix-${Math.random().toString(36).slice(-8)}`;
+
+    if (!user) {
+      const passwordHash = await hash(clientPassword, 10);
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          name: body.name?.trim() || email.split("@")[0],
+          passwordHash,
+        },
+      });
+    }
+
+    // 2. Create workspace
+    const workspaceName =
+      body.name?.trim() ||
+      `${user.name || email.split("@")[0]}'s Workspace`;
+
+    const workspace = await this.prisma.workspace.create({
+      data: {
+        name: workspaceName,
+        subscriptionTier: tier,
+        subscriptionStatus: status,
+        billingProvider,
+        subscriptionStartDate: startDate,
+        subscriptionExpiresAt: expiresAt,
+        monthlyReplyLimit: replyLimit,
+        tokenBalance: replyLimit,
+        subscriptionNotes: body.subscriptionNotes?.trim() || null,
+        members: {
+          create: {
+            userId: user.id,
+            role: "OWNER",
+          },
+        },
+      },
+    });
+
+    // 3. Create initial default Agent
+    await this.prisma.agent.create({
+      data: {
+        workspaceId: workspace.id,
+        name: "Support Assistant",
+        systemPrompt: "You are a helpful customer support AI.",
+        modelName: "default",
+        colorHex: "#10B981",
+      },
+    });
+
+    return {
+      success: true,
+      workspace: {
+        id: workspace.id,
+        name: workspace.name,
+        subscriptionTier: workspace.subscriptionTier,
+        subscriptionStatus: workspace.subscriptionStatus,
+        billingProvider: workspace.billingProvider,
+        subscriptionStartDate: workspace.subscriptionStartDate,
+        subscriptionExpiresAt: workspace.subscriptionExpiresAt,
+        monthlyReplyLimit: workspace.monthlyReplyLimit,
+        tokenBalance: workspace.tokenBalance,
+      },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+      temporaryPassword: body.password ? undefined : clientPassword,
+    };
+  }
+
+  @Delete("workspaces/:id")
+  async deleteWorkspace(
+    @Headers("x-admin-key") adminKey: string,
+    @Param("id") id: string,
+  ) {
+    this.validateAdmin(adminKey);
+
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { id },
+    });
+    if (!workspace) {
+      throw new HttpException("Workspace not found", HttpStatus.NOT_FOUND);
+    }
+
+    // Clean up dependent relations
+    await this.prisma.client.$transaction(async (tx) => {
+      await tx.workspaceMonthlyUsage.deleteMany({ where: { workspaceId: id } });
+      await tx.document.deleteMany({ where: { workspaceId: id } });
+      await tx.agent.deleteMany({ where: { workspaceId: id } });
+      await tx.workspaceMember.deleteMany({ where: { workspaceId: id } });
+      await tx.workspace.delete({ where: { id } });
+    });
+
+    return { success: true, message: `Workspace ${id} deleted.` };
   }
 
   @Patch("workspaces/:id")

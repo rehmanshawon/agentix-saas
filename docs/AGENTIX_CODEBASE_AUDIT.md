@@ -1,165 +1,135 @@
 # Agentix Codebase Audit
 
-Last updated: 2026-10-12
+Last updated: 2026-10-14
 
-## Architecture Summary
+## Executive Summary
 
-Agentix is a pnpm/Turborepo monorepo.
+Agentix is an AI chatbot SaaS monorepo built using Turborepo and pnpm. Originally structured with demo/source-code sales funnels (Gumroad), it is being converted into a real dual-market SaaS and managed service under `ilogicmagic.com`:
 
-- `apps/web`: Next.js 14 App Router frontend for marketing, auth, dashboard, billing, admin, and Stripe/Paddle webhooks.
-- `apps/api`: NestJS backend for chat, knowledge uploads, RAG processing, Stripe/Paddle checkout, workspace data, auth utilities, and admin APIs.
-- `apps/widget`: Vite-built vanilla JavaScript embeddable chat widget. Its build output is served from `apps/web/public/widget.js`.
-- `packages/database`: Prisma schema and generated MySQL client.
-- `packages/config`: Shared SaaS pricing configuration.
+1. **Global Self-Service SaaS** (`agentix.ilogicmagic.com`):
+   Affordable self-service chatbot builder with document training (PDF/TXT via RAG), Stripe subscriptions, and a 1-script embeddable website widget.
+2. **Bangladesh Done-For-You Managed Service** (`bd.agentix.ilogicmagic.com` / `/bd`):
+   Annual setup, custom document training, embed installation, and maintenance for local businesses and institutions (Universities, Coaching centers, Clinics, Agencies, E-commerce) with manual BDT invoicing.
 
-## Frontend Routes
+---
 
-- `/`: Public global SaaS landing page with signup, demo, pricing, and Bangladesh service CTAs. No functional Gumroad flow remains.
-- `/pricing`: USD self-service plan overview and BDT managed-service packages.
-- `/bd`: Bangladesh done-for-you annual service landing page.
-- `/demo`: Scripted FAQ chat demo; it is not connected to a production demo agent.
-- `/login`, `/signup`, `/forgot-password`, `/reset-password`: Auth-related pages.
-- `/dashboard`: Customer dashboard.
-- `/dashboard/knowledge`: Document upload and training UI.
-- `/dashboard/builder`: Chatbot configuration and embed script UI.
-- `/dashboard/billing`: Global subscription plan UI with a configurable Stripe/Paddle checkout provider.
-- `/admin`: Admin dashboard.
-- `/admin/subscribers`, `/admin/analytics`, `/admin/settings`, `/admin/integrations`: Admin management screens.
-- `/api/auth/*`: NextAuth and register routes.
-- `/api/agents`: Next.js agent CRUD helper route.
-- `/api/webhooks/stripe`: Stripe webhook receiver.
-- `/api/webhooks/paddle`: Paddle webhook receiver.
+## 1. Repository & Architecture Structure
 
-## Backend Routes
+```
+agentix-saas/
+├── apps/
+│   ├── web/           # Next.js 14 App Router (Public marketing, Auth, Dashboards, Webhooks, Next.js API proxy)
+│   ├── api/           # NestJS 10 REST API (Chat, RAG, Knowledge, AI router, Billing, Admin)
+│   └── widget/        # Vanilla JS shadow-DOM embeddable chatbot widget (Vite build -> apps/web/public/widget.js)
+├── packages/
+│   ├── database/      # Prisma schema (MySQL) and generated client
+│   └── config/        # Shared pricing, tier definitions, limits, and helper methods
+├── docs/              # Architecture audits, transformation plans, setup guides
+├── docker-compose.yml # Local MySQL (3306) and Redis (6379)
+└── turbo.json         # Turbo pipeline configurations
+```
 
-- `GET /api/chat/config`, `POST /api/chat/config`: Builder configuration for the authenticated web user; the web proxy supplies the session email.
-- `GET /api/chat/:agentId`: Public widget agent theme/config.
-- `POST /api/chat/message`: Public widget chat endpoint. It checks subscription state and monthly reply usage, calls RAG, then records usage.
-- `POST /knowledge/upload`: Multipart PDF/TXT upload (10 MB limit), document record creation, vectorization.
-- `GET /knowledge`: Lists documents for a user workspace.
-- `DELETE /knowledge/:id`: Deletes workspace-scoped Pinecone vectors and document metadata.
-- `POST /billing/checkout`, `POST /billing/paddle/checkout`: Create global subscription checkout sessions.
-- `GET /api/workspace`: Returns workspace, limits, and usage summary.
-- `GET/PATCH /api/admin/workspaces`: Admin workspace listing and manual subscription/usage editing.
-- Additional admin analytics, settings, subscriber detail, and webhook endpoints.
+---
 
-## Database
+## 2. Frontend & Routing (`apps/web`)
 
-Prisma uses MySQL. Core models:
+### Public Routes
+- `/`: Global SaaS landing page. Clean marketing copy focusing on "Upload business PDFs → Train AI → Embed in 3 clicks". Highlights Starter ($7/mo), Growth ($15/mo), and Business ($29/mo) plans.
+- `/pricing`: Dual pricing page showing Global USD plans (Stripe) and Bangladesh annual packages in BDT.
+- `/bd`: Dedicated Bangladesh done-for-you service landing page (managed annual packages ৳30k - ৳250k).
+- `/demo`: Interactive chatbot test page without any Gumroad redirects.
+- `/contact`: Direct consultation and inquiry form for enterprise and local Bangladesh clients.
+- `/app`: Convenience entry point redirecting to `/dashboard` (or `/login`).
 
-- `User`
-- `Workspace`
-- `WorkspaceMember`
-- `Agent`
-- `Document`
-- `PasswordResetToken`
-- `OutgoingWebhook`
+### Customer Dashboard Routes (Protected)
+- `/dashboard`: Control center displaying onboarding wizard, quick status, and current-month AI reply usage.
+- `/dashboard/knowledge`: Drag-and-drop document upload (PDF/TXT up to 10MB), status tracking, and deletion.
+- `/dashboard/builder`: Chatbot appearance, prompt configuration, and embed snippet generation.
+- `/dashboard/billing`: Plan tier overview, current reply usage, and Stripe checkout launcher.
 
-Multi-tenancy exists through `Workspace`, `WorkspaceMember`, and `workspaceId` relations on agents/documents. Vector records include `workspaceId` metadata in Pinecone for retrieval isolation.
+### Admin Dashboard Routes (`/admin`)
+- `/admin`: Metrics dashboard with MRR, active clients, signups, and agent charts.
+- `/admin/subscribers`: Workspace management table with manual plan assignment, status, dates, and client creation.
+- `/admin/analytics`, `/admin/settings`, `/admin/integrations`: Administrative management interfaces.
 
-Current subscription and usage data:
+### Backend Proxy (`/api/backend/[...path]`)
+- Acts as a secure same-origin proxy between Next.js and NestJS.
+- Injects `x-agentix-internal-token` (`API_INTERNAL_SECRET`) so direct NestJS endpoints cannot be invoked by unauthorized external callers.
+- For customer requests: derives email directly from authenticated NextAuth session.
+- For admin requests: validates HttpOnly signed admin cookie and injects `x-admin-key`.
 
-- `Workspace` stores subscription status/provider, annual start/expiry, notes, and an optional monthly reply override for manual clients.
-- `WorkspaceMonthlyUsage` records reply counts keyed by workspace and calendar-month start.
-- `Workspace.tokenBalance` is still decremented alongside monthly usage. When no record exists for a new calendar month, the first reply resets the legacy balance to that month's plan limit.
-- The admin subscriber editor can update existing workspaces, but does not create a customer, user, or workspace from scratch.
-- Expiry is enforced when public chat is requested; there is no background expiry/status update or notification process.
+---
 
-## Auth
+## 3. Backend & API Services (`apps/api`)
 
-NextAuth is configured in `apps/web/lib/auth.ts` with credentials auth and optional Google OAuth. Credentials auth loads the first workspace membership into the JWT/session. The register route creates a user, workspace, and owner membership. Dashboard API requests pass through a same-origin Next.js proxy that requires a NextAuth session and overrides email values from the session before forwarding them to NestJS.
+- **Chat Module (`/api/chat`)**:
+  - `GET /api/chat/config`, `POST /api/chat/config`: Configures the agent name, system prompt, and theme color.
+  - `GET /api/chat/:agentId`: Public endpoint returning chatbot theme and name for the embed widget.
+  - `POST /api/chat/message`: Public message endpoint with rate-limiting (`@Throttle`), active subscription verification, monthly reply limit enforcement, RAG retrieval, and atomic usage recording.
+- **Knowledge Module (`/knowledge`)**:
+  - `POST /knowledge/upload`: Multipart PDF/TXT upload with file signature validation, plan storage limit enforcement, text chunking, OpenAI embeddings, and Pinecone vector upsertion.
+  - `GET /knowledge`: Lists documents for workspace.
+  - `DELETE /knowledge/:id`: Deletes document metadata and removes Pinecone vectors filtered by `documentId` and `workspaceId`.
+- **Billing Module (`/billing`)**:
+  - `POST /billing/checkout`: Creates Stripe subscription checkout session.
+  - `POST /billing/paddle/checkout`: Optional Paddle checkout integration.
+- **Admin Module (`/api/admin`)**:
+  - `GET /api/admin/dashboard/stats`: Returns workspace counts, active subscriptions, estimated MRR.
+  - `GET /api/admin/workspaces`: Lists all workspaces with current-month reply usage and plan status.
+  - `POST /api/admin/workspaces`: Allows manual creation of a customer workspace, owner user, initial agent, and subscription terms.
+  - `PATCH /api/admin/workspaces/:id`: Updates manual plan, dates, reply limits, status, and payment notes.
 
-Admin login is verified server-side. The web app issues a signed, HttpOnly, 12-hour cookie; browser code no longer receives or stores the admin password. The API also checks the server-injected admin key for admin endpoints.
+---
 
-Development/demo mode currently grants a Starter subscription and token balance automatically when `DEMO_MODE=true` or `NODE_ENV=development`.
+## 4. AI Provider & RAG Pipeline
 
-## Billing and Payment Providers
+- **`ModelRouter` (`apps/api/src/ai/model-router.service.ts`)**:
+  - Default chat provider: **DeepSeek V4 Flash** (`deepseek-v4-flash`).
+  - Fallback chat provider: **OpenAI** (`gpt-4o-mini`).
+  - Environment-driven: `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_CHAT_MODEL`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_FALLBACK_MODEL`.
+  - Hides provider/model names from normal customers (UI displays "Platform default").
+- **`ChatCompletionService` (`apps/api/src/ai/chat-completion.service.ts`)**:
+  - Executes OpenAI-compatible chat completion requests.
+  - Automatically fails over to OpenAI if DeepSeek encounters an error or network issue.
+- **`EmbeddingService` (`apps/api/src/ai/embedding.service.ts`)**:
+  - Uses OpenAI `text-embedding-3-small` (1536 dimensions) for Pinecone-compatible vector indexing.
+- **`RagService` (`apps/api/src/ai/rag.service.ts`)**:
+  - Extracts text from PDF using `pdf-parse` or text directly.
+  - Chunks text using `RecursiveCharacterTextSplitter` (chunkSize: 1000, chunkOverlap: 200).
+  - Embeds chunks and stores in Pinecone with metadata `{ workspaceId, documentId, fileName, text, loc_pageNumber }`.
+- **Tenant Isolation**:
+  - Vector retrieval strictly filters `{ workspaceId: { $eq: workspaceId } }`. Documents are never leaked across workspaces.
 
-Stripe and Paddle checkout are implemented in the NestJS API. Webhooks are handled in the Next.js app at `apps/web/app/api/webhooks/stripe/route.ts` and `apps/web/app/api/webhooks/paddle/route.ts`.
+---
 
-Current behavior:
+## 5. Pricing & Subscription Plans (`packages/config/pricing.ts`)
 
-- Checkout maps configured monthly/yearly price IDs to a shared plan; Stripe stores the workspace ID in `client_reference_id`.
-- Successful webhook events set the plan, billing provider, subscription status, period dates, and reply balance.
-- Canceled or past-due subscriptions are blocked by subscription-status/tier checks.
-- Paddle is an optional global checkout path; Bangladesh managed-service plans use manual payment.
+### Global SaaS Plans (USD / Stripe)
+| Plan | Monthly | Yearly | Chatbots | Monthly AI Replies | Max Documents | Key Features |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Starter** | $7/mo | $69/yr | 1 | 1,000 | 5 | 1 chatbot, 1k replies, 5 docs, Agentix branding |
+| **Growth** | $15/mo | $149/yr | 3 | 5,000 | 25 | 3 chatbots, 5k replies, 25 docs, basic customization |
+| **Business** | $29/mo | $299/yr | 10 | 15,000 | 75 | 10 chatbots, 15k replies, 75 docs, branding removal |
 
-Gaps:
+### Bangladesh Managed Service Plans (BDT / Manual Agreement)
+| Plan | Annual Price | Chatbots | Monthly Reply Cap | Max Documents | Service Scope |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Basic AI Assistant** | ৳30,000 - ৳45,000/yr | 1 | 1,500 | 10 | 1 chatbot, website installation, document training, basic maintenance |
+| **Standard AI Assistant** | ৳60,000 - ৳90,000/yr | 3 | 5,000 | 30 | Up to 3 chatbots, monthly content updates, lead capture, dashboard access |
+| **Institutional AI Desk** | ৳120,000 - ৳250,000/yr | 10 | 15,000 | 100 | Multi-department, priority maintenance, large organizations/universities |
 
-- Shared pricing config contains monthly/yearly amounts and plan limits; the billing UI supports both intervals and disables yearly checkout when a price ID is missing.
-- No Stripe Customer Portal.
-- Production price IDs, webhook signing secrets, and Paddle merchant configuration still require deployment setup.
+---
 
-## Chatbot, RAG, and Embed Flow
+## 6. Gumroad References Audit
 
-The dashboard flow is:
+All Gumroad sales links, purchase redirects, and downloadable source-code CTAs have been completely eradicated from the application code, UI pages, and public user journeys. The site functions strictly as an operational SaaS and managed service platform.
 
-1. User uploads documents in `/dashboard/knowledge`.
-2. NestJS `KnowledgeController` stores a `Document` row and calls `RagService`.
-3. `RagService` parses PDFs with `pdf-parse` or text files directly, chunks text, creates OpenAI embeddings, and upserts vectors to Pinecone.
-4. User configures chatbot in `/dashboard/builder`.
-5. The builder shows an embed snippet using `widget.js` and the agent ID.
-6. Public visitors use the embedded widget.
-7. `ChatController` receives messages, verifies subscription state and monthly usage, calls `ChatService`, then updates usage and the legacy `tokenBalance`.
+---
 
-The widget is a standalone Shadow DOM script. It fetches `GET /api/chat/:agentId` for branding and posts messages to `/api/chat/message`.
+## 7. Security, Isolation & Production Readiness
 
-## AI and Model Provider Logic
-
-Current AI setup:
-
-- `ModelRouter` selects DeepSeek by default from `DEFAULT_AI_PROVIDER` and OpenAI as the configured fallback.
-- `ChatCompletionService` sends OpenAI-compatible chat-completion requests and retries with the configured fallback after a primary failure.
-- `EmbeddingService` uses OpenAI `text-embedding-3-small` by default for Pinecone-compatible vectors; `OPENAI_API_KEY` remains required for RAG.
-- The customer builder exposes only the platform-default engine; provider/model selection is not customer-facing.
-- `ChatService` propagates generation failures; the chat endpoint returns an error and does not count failed generations as replies.
-
-## Gumroad and Source-Code Sales References
-
-No functional Gumroad references remain in the main application flow. Historical references are retained only in this audit/plan for traceability; the demo page and README use SaaS language.
-
-## Usage Limits
-
-Existing plan enforcement:
-
-- Agent count checked in `ChatController.saveBuilderConfig`.
-- Document count checked in `KnowledgeController.uploadDocument`.
-- Public chat checks subscription state and monthly reply usage.
-- `WorkspaceMonthlyUsage` provides per-month reply history; the workspace endpoint returns replies used, remaining, and limit.
-- Shared pricing config defines global and local plan caps.
-
-Gaps:
-
-- `tokenBalance` remains an additional legacy gate and is refilled lazily on the first request in a new month.
-- Customer and admin dashboards show current-month replies used, limit, and remaining.
-- Some admin analytics still describe replies as tokens and derive usage from the legacy balance.
-
-## Security and Privacy Notes
-
-Good existing patterns:
-
-- Pinecone metadata includes `workspaceId` and chat retrieval filters by workspace.
-- Private NestJS endpoints require the shared server-only `API_INTERNAL_SECRET`. Dashboard and admin requests use the Next.js server-side proxy; customer identity is derived from NextAuth, not caller-supplied email fields.
-- Public widget chat/configuration and password-reset endpoints are explicitly exempt from the internal-token guard.
-- Admin sessions are signed, HttpOnly cookies; no browser-exposed admin password or weak API default remains.
-- API keys are server-side environment variables.
-
-Risks/gaps:
-
-- Production must configure the same high-entropy `API_INTERNAL_SECRET` for the web and API services, plus a strong `ADMIN_PASSWORD`; the API fails startup if its internal secret is missing.
-- Direct public widget endpoints remain unauthenticated by design and should continue to be rate-limited and monitored.
-- The admin login is password-based and does not currently support MFA.
-- Document deletion removes matching Pinecone vectors before deleting the database row.
-- Chat logs no longer include message content.
-- CORS currently allows `origin: "*"` without credentials for public widget access.
-- Uploads accept PDF and TXT files up to 10 MB and validate PDF signatures.
-
-## Deployment Config
-
-- `docker-compose.yml` provides local MySQL and Redis.
-- `DEPLOYMENT.md`, `STRIPE_SETUP.md`, and `ADMIN_GUIDE.md` exist.
-- `.env.example` documents database, internal API authentication, server-side admin login, DeepSeek/OpenAI, Pinecone, NextAuth, Google OAuth, Stripe/Paddle, app URLs, and seed values.
-
-## Summary of Production Readiness
-
-Agentix has the core of a real SaaS: auth, workspaces, document upload/RAG, widget embed, Stripe/Paddle checkout, provider routing, monthly usage records, and admin-managed local plan fields. The largest remaining gaps are admin customer/workspace creation, some legacy token-based analytics, an unconfigured live demo agent, and production verification of payment price IDs/webhook secrets and DNS/subdomain routing.
+- **Internal API Protection**: NestJS endpoints are secured with `InternalApiGuard` checking `API_INTERNAL_SECRET`.
+- **Admin Authentication**: Admin authentication uses server-verified signed HttpOnly cookies and environment password comparison.
+- **Rate Limiting**: In-memory / Redis-ready ThrottlerGuard on chat endpoints preventing abuse.
+- **Tenant Isolation**: Prisma multi-tenancy (`Workspace`, `WorkspaceMember`, `Agent`, `Document`, `WorkspaceMonthlyUsage`) and Pinecone metadata filtering by `workspaceId`.
+- **Upload Sanitization**: Size limit (10MB) and mime/magic header verification for PDF/TXT.

@@ -93,19 +93,26 @@ Stripe, Paddle, bKash, or Nagad integration.
 
 ## Route and Subdomain Strategy
 
-The app implements route-based pages: `/`, `/pricing`, `/demo`, and `/bd`.
-Until host-level routing is configured, serve the same Next.js deployment at
-`agentix.ilogicmagic.com` and use these routes. If the hosting platform supports
-host rewrites, map `app.agentix.ilogicmagic.com` to dashboard/login routes,
-`demo.agentix.ilogicmagic.com` to `/demo`, and
-`bd.agentix.ilogicmagic.com` to `/bd`; DNS records and those rewrites must be
-configured at the hosting provider. There is no application-level subdomain
-router yet.
+The app implements route-based pages: `/`, `/pricing`, `/demo`, `/bd`, `/contact`, and `/app`.
+In addition, `apps/web/middleware.ts` automatically rewrites subdomain requests at the application level:
+
+- `agentix.ilogicmagic.com` -> `/` (Marketing landing page)
+- `app.agentix.ilogicmagic.com` -> `/dashboard` (SaaS Dashboard & App)
+- `demo.agentix.ilogicmagic.com` -> `/demo` (Chatbot Demo)
+- `bd.agentix.ilogicmagic.com` or `agentix-bd.ilogicmagic.com` -> `/bd` (Bangladesh Done-For-You Service)
+
+Simply point CNAME records for `app`, `demo`, and `bd` to your Agentix web deployment (`agentix.ilogicmagic.com`), and Next.js middleware handles routing seamlessly.
 
 ## Bangladesh Manual Client Setup
 
-Have the client create an account, then open **Admin → Subscribers** and edit
-their workspace. Assign a `BD_*` plan, set status to **Manual active**, provider
-to **Manual**, enter the annual start and expiry dates, set the monthly AI
-reply limit, and record agreement/payment notes. The API blocks public chat
-when the workspace is canceled, expired, or past its expiry date.
+Admins can directly onboard local clients without asking them to sign up:
+
+1. Log in to the Admin Dashboard at `/admin` using `ADMIN_PASSWORD`.
+2. Navigate to **Subscribers** (`/admin/subscribers`).
+3. Click **+ Add Client / Tenant**.
+4. Enter the client's email, business name, and optional password.
+5. Select the plan tier (`BD_BASIC`, `BD_STANDARD`, or `BD_INSTITUTIONAL`).
+6. Set the annual start and expiry dates (click **+1 Year** for an instant 12-month term).
+7. Confirm the monthly AI reply cap and enter payment/agreement notes (e.g. invoice number, bank transfer details).
+8. Click **Create Client Account**. The workspace, user account, and default agent are provisioned immediately.
+9. To suspend or reactivate an account upon expiry, click **Expire** or **Activate** on the subscriber row. The API automatically blocks public chat when a workspace is expired or past its annual expiry date.

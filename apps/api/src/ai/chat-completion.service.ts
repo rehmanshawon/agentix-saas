@@ -54,6 +54,7 @@ export class ChatCompletionService {
         messages,
         temperature,
       }),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok) {
