@@ -1,3 +1,40 @@
+import * as fs from "fs";
+import * as path from "path";
+
+function loadEnvFiles() {
+  const envPaths = [
+    path.resolve(process.cwd(), ".env"),
+    path.resolve(process.cwd(), "../../.env"),
+    path.resolve(__dirname, "../../.env"),
+    path.resolve(__dirname, "../../../.env"),
+  ];
+  for (const envPath of envPaths) {
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const match = trimmed.match(/^([^=]+)=(.*)$/);
+        if (match) {
+          const key = match[1].trim();
+          let val = match[2].trim();
+          if (
+            (val.startsWith('"') && val.endsWith('"')) ||
+            (val.startsWith("'") && val.endsWith("'"))
+          ) {
+            val = val.slice(1, -1);
+          }
+          if (!process.env[key]) {
+            process.env[key] = val;
+          }
+        }
+      }
+      break;
+    }
+  }
+}
+loadEnvFiles();
+
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { Logger, ValidationPipe } from "@nestjs/common";
@@ -5,24 +42,25 @@ import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 
 async function bootstrap() {
   // Validate required environment variables on startup
+  const isDev = process.env.NODE_ENV !== "production";
   const requiredEnvVars = [
     "DATABASE_URL",
-    "PINECONE_API_KEY",
-    "PINECONE_INDEX_NAME",
     "API_INTERNAL_SECRET",
     "ADMIN_PASSWORD",
   ];
 
-  const defaultProvider =
-    process.env.DEFAULT_AI_PROVIDER?.toLowerCase() || "deepseek";
-  if (defaultProvider === "deepseek") {
-    requiredEnvVars.push("DEEPSEEK_API_KEY");
-  } else {
-    requiredEnvVars.push("OPENAI_API_KEY");
-  }
-
-  if (!process.env.OPENAI_API_KEY) {
-    requiredEnvVars.push("OPENAI_API_KEY");
+  if (!isDev) {
+    requiredEnvVars.push("PINECONE_API_KEY", "PINECONE_INDEX_NAME");
+    const defaultProvider =
+      process.env.DEFAULT_AI_PROVIDER?.toLowerCase() || "deepseek";
+    if (defaultProvider === "deepseek") {
+      requiredEnvVars.push("DEEPSEEK_API_KEY");
+    } else {
+      requiredEnvVars.push("OPENAI_API_KEY");
+    }
+    if (!process.env.OPENAI_API_KEY) {
+      requiredEnvVars.push("OPENAI_API_KEY");
+    }
   }
 
   const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
@@ -34,6 +72,18 @@ async function bootstrap() {
       "Please check your .env file and ensure all required variables are set.",
     );
     process.exit(1);
+  }
+
+  if (isDev) {
+    const aiVars = ["DEEPSEEK_API_KEY", "OPENAI_API_KEY", "PINECONE_API_KEY"];
+    const missingAi = aiVars.filter(
+      (v) => !process.env[v] || process.env[v]?.startsWith("your-"),
+    );
+    if (missingAi.length > 0) {
+      console.warn(
+        `⚠️ Running in development mode with placeholder AI keys (${missingAi.join(", ")}). Fallback mock replies will be provided until real keys are added.`,
+      );
+    }
   }
 
   const app = await NestFactory.create(AppModule, { rawBody: true });

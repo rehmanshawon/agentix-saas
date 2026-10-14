@@ -134,6 +134,24 @@ export class KnowledgeController {
     logger.log(`Document created: ${document.id}`);
 
     try {
+      const hasOpenAI =
+        process.env.OPENAI_API_KEY &&
+        !process.env.OPENAI_API_KEY.startsWith("your-");
+      const hasPinecone =
+        process.env.PINECONE_API_KEY &&
+        !process.env.PINECONE_API_KEY.startsWith("your-");
+
+      if (process.env.NODE_ENV !== "production" && (!hasOpenAI || !hasPinecone)) {
+        logger.warn(
+          `Dev mode: Document ${document.id} saved as READY without external vectorization (OpenAI/Pinecone keys pending).`,
+        );
+        const updated = await this.prisma.document.update({
+          where: { id: document.id },
+          data: { status: "READY" },
+        });
+        return updated;
+      }
+
       await this.ragService.processAndVectorizeDocument(
         file.buffer,
         document.id,
@@ -151,7 +169,7 @@ export class KnowledgeController {
 
       logger.log(`Document vectorized successfully: ${document.id}`);
       return updated;
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Vectorization failed for ${document.id}: ${error.message}`);
       await this.prisma.document.update({
         where: { id: document.id },
